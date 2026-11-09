@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <title>ちょちょうせい</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  
+  <meta charset="utf-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@700;900&family=JetBrains+Mono:wght@500&display=swap">
+  <style>
+/* 方眼の手帳のような落ち着いた画面。藍の差し色、○△×は意味色で区別 */
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --surface-2: #eef0f4;
+  --ink: #18202e;
+  --ink-2: #5a6273;
+  --line: #dde1e8;
+  --accent: #2d4bb3;
+  --accent-ink: #ffffff;
+  --accent-soft: #e6ebfa;
+  --ok: #138a5a;
+  --ok-soft: #dcf3e8;
+  --maybe: #b7791f;
+  --maybe-soft: #fbf0d9;
+  --ng: #8b93a3;
+  --ng-soft: #eceef2;
+  --busy: #c7ccd6;
+  --danger: #c2372e;
+  --best: #fff6c9;
+  --font-display: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", sans-serif;
+  --font-body: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+  --font-num: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r: 10px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11151c; --surface: #191f29; --surface-2: #222a36; --ink: #e8ebf1; --ink-2: #9aa3b4;
+    --line: #2d3644; --accent: #7d9bff; --accent-ink: #0d1220; --accent-soft: #232f52;
+    --ok: #4cc58f; --ok-soft: #173a2b; --maybe: #e2a94b; --maybe-soft: #3b2f17; --ng: #7d8697; --ng-soft: #252c37;
+    --busy: #3a4352; --danger: #ef6b62; --best: #3a3418; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11151c; --surface: #191f29; --surface-2: #222a36; --ink: #e8ebf1; --ink-2: #9aa3b4;
+  --line: #2d3644; --accent: #7d9bff; --accent-ink: #0d1220; --accent-soft: #232f52;
+  --ok: #4cc58f; --ok-soft: #173a2b; --maybe: #e2a94b; --maybe-soft: #3b2f17; --ng: #7d8697; --ng-soft: #252c37;
+  --busy: #3a4352; --danger: #ef6b62; --best: #3a3418; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--ink);
+  font: 15px/1.6 var(--font-body);
+  -webkit-text-size-adjust: 100%;
+}
+[hidden] { display: none !important; }
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.wrap {
+  max-width: 760px; margin: 0 auto;
+  padding-block: 0 120px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.boot { padding: 40px; text-align: center; color: var(--ink-2); }
+
+/* ヘッダー */
+.topbar {
+  display: flex; align-items: center; gap: 12px; padding-block: 14px;
+  border-bottom: 1px solid var(--line); margin-bottom: 18px;
+}
+.brand { font-family: var(--font-display); font-weight: 900; font-size: 17px; letter-spacing: .02em; display: flex; align-items: center; gap: 8px; }
+.brand-mark { display: inline-grid; grid-template-columns: repeat(3, 7px); gap: 2px; }
+.brand-mark i { width: 7px; height: 7px; border-radius: 2px; background: var(--line); }
+.brand-mark i.on { background: var(--accent); }
+.topbar .spacer { flex: 1; }
+
+h1, h2, h3 { font-family: var(--font-display); font-weight: 700; line-height: 1.35; text-wrap: balance; margin: 0; }
+h1 { font-size: 24px; }
+h2 { font-size: 18px; }
+h3 { font-size: 15px; }
+.muted { color: var(--ink-2); }
+.small { font-size: 13px; }
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.stack { display: flex; flex-direction: column; gap: 14px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+label.row { flex-wrap: nowrap; align-items: flex-start; cursor: pointer; }
+label.row > input { flex: none; margin-top: 5px; }
+.section { display: flex; flex-direction: column; gap: 12px; margin-top: 26px; }
+.section-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.section-head .spacer { flex: 1; }
+.label { font-size: 12px; font-weight: 700; letter-spacing: .06em; color: var(--ink-2); }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; }
+.panel.flush { padding: 0; overflow: hidden; }
+
+/* ボタン */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 40px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--surface); cursor: pointer; font-weight: 500; text-decoration: none; color: var(--ink);
+  white-space: nowrap;
+}
+.btn:hover { background: var(--surface-2); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 700; }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.line { background: #06c755; border-color: #06c755; color: #fff; font-weight: 700; }
+.btn.ghost { border-color: transparent; background: transparent; }
+.btn.ghost:hover { background: var(--surface-2); }
+.btn.danger { color: var(--danger); }
+.btn.sm { min-height: 32px; padding: 0 10px; font-size: 13px; }
+.btn.block { width: 100%; }
+.btn[disabled] { opacity: .5; cursor: not-allowed; }
+
+/* フォーム */
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field > span { font-size: 13px; font-weight: 700; color: var(--ink-2); }
+.input, select.input, textarea.input {
+  width: 100%; min-height: 42px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--surface); outline: none;
+}
+.input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+textarea.input { min-height: 80px; resize: vertical; line-height: 1.6; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 520px) { .grid2 { grid-template-columns: 1fr; } }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  min-height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line);
+  background: var(--surface); cursor: pointer; font-size: 14px; display: inline-flex; align-items: center; gap: 4px;
+}
+.chip.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 700; }
+.chip.dim { opacity: .55; }
+
+.tabs { display: flex; gap: 4px; background: var(--surface-2); padding: 4px; border-radius: 10px; }
+.tab { flex: 1; min-height: 36px; border: 0; border-radius: 7px; background: transparent; cursor: pointer; font-weight: 500; font-size: 14px; color: var(--ink-2); }
+.tab.on { background: var(--surface); color: var(--ink); font-weight: 700; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+
+.pill { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.pill.open { background: var(--accent-soft); color: var(--accent); }
+.pill.decided { background: var(--ok-soft); color: var(--ok); }
+.pill.warn { background: var(--maybe-soft); color: var(--maybe); }
+
+/* 一覧 */
+.list { display: flex; flex-direction: column; }
+.item { display: flex; gap: 12px; align-items: center; padding: 14px 16px; border-top: 1px solid var(--line); }
+.item:first-child { border-top: 0; }
+.item .body { flex: 1; min-width: 0; }
+.item .title { font-weight: 700; overflow-wrap: anywhere; }
+.item .meta { font-size: 13px; color: var(--ink-2); display: flex; gap: 10px; flex-wrap: wrap; }
+.item.clickable { cursor: pointer; }
+.item.clickable:hover { background: var(--surface-2); }
+.empty { padding: 28px 16px; text-align: center; color: var(--ink-2); }
+
+/* ===== 週グリッド（候補入力） ===== */
+.wk-nav { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.wk-nav .range { font-weight: 700; min-width: 0; flex: 1; text-align: center; }
+.wk-scroll { overflow: auto; max-height: 520px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+.wk { display: grid; grid-template-columns: 38px repeat(7, minmax(40px, 1fr)); min-width: 320px; position: relative; }
+.wk-head { position: sticky; top: 0; z-index: 3; background: var(--surface); border-bottom: 1px solid var(--line); text-align: center; padding: 6px 0 4px; font-size: 12px; line-height: 1.3; }
+.wk-head b { display: block; font-size: 15px; font-family: var(--font-num); }
+.wk-head.sat { color: #2f6fd6; } .wk-head.sun { color: var(--danger); }
+.wk-head.today b { color: var(--accent-ink); background: var(--accent); border-radius: 6px; margin: 0 6px; }
+.wk-allday { grid-column: 2 / -1; display: none; }
+.wk-times { position: relative; }
+.wk-time { height: var(--cell); font-size: 10.5px; color: var(--ink-2); text-align: right; padding-right: 4px; transform: translateY(-7px); font-family: var(--font-num); }
+.wk-day { position: relative; border-left: 1px solid var(--line); }
+.wk-cell { height: var(--cell); border-top: 1px solid transparent; cursor: pointer; touch-action: pan-x pan-y; }
+.wk-cell.hour { border-top-color: var(--line); }
+.wk-cell.half { border-top: 1px dashed color-mix(in srgb, var(--line) 60%, transparent); }
+.wk-cell:hover { background: var(--accent-soft); }
+.wk-cell.past { background: repeating-linear-gradient(45deg, transparent 0 4px, var(--surface-2) 4px 6px); cursor: not-allowed; }
+.wk-busy {
+  position: absolute; left: 2px; right: 2px; border-radius: 4px; pointer-events: none;
+  background: var(--busy); opacity: .75; font-size: 10px; line-height: 1.25; padding: 2px 3px; overflow: hidden; color: var(--ink);
+}
+.wk-busy.allday { position: static; display: block; margin: 0 2px 2px; opacity: .9; }
+.wk-slot {
+  position: absolute; left: 3px; right: 3px; border-radius: 5px; background: var(--accent); color: var(--accent-ink);
+  font-size: 11px; line-height: 1.2; padding: 2px 4px; cursor: pointer; z-index: 2; overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,.18); font-family: var(--font-num); font-weight: 500;
+}
+.wk-slot.conflict { background: repeating-linear-gradient(135deg, var(--accent) 0 6px, color-mix(in srgb, var(--accent) 70%, var(--danger)) 6px 12px); }
+.wk-slot:hover::after { content: "×"; position: absolute; right: 4px; top: 1px; font-size: 13px; }
+.wk-alldays { display: contents; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--ink-2); }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 4px; }
+
+/* ミニ月カレンダー */
+.mcal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.mcal .dow { text-align: center; font-size: 12px; color: var(--ink-2); padding-bottom: 2px; }
+.mcal .d {
+  aspect-ratio: 1 / 1; max-width: 100%; border: 1px solid var(--line); background: var(--surface); border-radius: 8px;
+  cursor: pointer; font-family: var(--font-num); font-size: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+}
+.mcal .d small { font-size: 9px; color: var(--ink-2); font-family: var(--font-body); }
+.mcal .d.sat { color: #2f6fd6; } .mcal .d.sun { color: var(--danger); }
+.mcal .d.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.mcal .d.on small { color: var(--accent-ink); }
+.mcal .d[disabled] { opacity: .3; cursor: default; }
+.mcal .d.blank { visibility: hidden; }
+.mcal .d.today { box-shadow: inset 0 0 0 2px var(--accent); }
+
+/* 選択済み候補 */
+.picked-day { display: grid; grid-template-columns: 92px 1fr; gap: 8px; padding: 8px 0; border-top: 1px solid var(--line); align-items: start; }
+.picked-day:first-child { border-top: 0; }
+.picked-day .d { font-weight: 700; font-size: 14px; padding-top: 5px; }
+.slot-chip {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 4px 0 10px; border-radius: 8px;
+  background: var(--accent-soft); color: var(--ink); font-family: var(--font-num); font-size: 13px;
+}
+.slot-chip.conflict { background: var(--maybe-soft); }
+.slot-chip button { border: 0; background: transparent; width: 26px; height: 26px; border-radius: 6px; cursor: pointer; color: var(--ink-2); font-size: 16px; line-height: 1; }
+.slot-chip button:hover { background: rgba(0,0,0,.08); }
+
+/* ===== 回答 ===== */
+.ans-list { display: flex; flex-direction: column; }
+.ans-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; padding: 10px 14px; border-top: 1px solid var(--line); }
+.ans-row:first-child { border-top: 0; }
+.ans-row .when { font-weight: 700; font-size: 15px; }
+.ans-row .when .num { font-weight: 500; }
+.ans-row .tally { font-size: 12px; color: var(--ink-2); }
+.ans-row.best { background: var(--best); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.seg button {
+  width: 48px; height: 44px; border: 0; background: var(--surface); cursor: pointer; font-size: 20px; line-height: 1; color: var(--ng);
+  border-left: 1px solid var(--line);
+}
+.seg button:first-child { border-left: 0; }
+.seg button.o.on { background: var(--ok); color: #fff; }
+.seg button.t.on { background: var(--maybe); color: #fff; }
+.seg button.x.on { background: var(--ng); color: #fff; }
+
+.mark-o { color: var(--ok); font-weight: 700; }
+.mark-t { color: var(--maybe); font-weight: 700; }
+.mark-x { color: var(--ng); }
+
+.tbl-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+table.tbl { border-collapse: collapse; width: 100%; font-size: 14px; }
+.tbl th, .tbl td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: center; white-space: nowrap; }
+.tbl thead th { background: var(--surface-2); font-size: 12px; font-weight: 700; position: sticky; top: 0; }
+.tbl th.slot { text-align: left; position: sticky; left: 0; background: var(--surface); z-index: 1; font-weight: 700; }
+.tbl thead th.slot { background: var(--surface-2); z-index: 2; }
+.tbl tr.best td, .tbl tr.best th.slot { background: var(--best); }
+.tbl tr.decided td, .tbl tr.decided th.slot { background: var(--ok-soft); }
+.tbl .name-h { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
+.tbl .score { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.tbl td.act { padding: 4px 8px; }
+
+.banner { border-radius: var(--r); padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+.banner.ok { background: var(--ok-soft); border: 1px solid color-mix(in srgb, var(--ok) 35%, transparent); }
+.banner .big { font-family: var(--font-display); font-size: 20px; font-weight: 900; }
+
+.copybox { display: flex; gap: 6px; }
+.copybox input { flex: 1; min-width: 0; font-family: var(--font-num); font-size: 13px; }
+
+/* 下部固定バー */
+.dock {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(8px);
+  border-top: 1px solid var(--line);
+  padding-top: 10px; padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.dock .inner { max-width: 760px; margin: 0 auto; display: flex; gap: 8px; align-items: center; }
+.dock .inner .info { flex: 1; min-width: 0; font-size: 13px; color: var(--ink-2); }
+
+/* モーダル */
+.modal-bg { position: fixed; inset: 0; background: rgba(10,14,22,.45); z-index: 50; display: flex; align-items: flex-end; justify-content: center; }
+@media (min-width: 640px) { .modal-bg { align-items: center; } }
+.modal {
+  background: var(--surface); width: 100%; max-width: 520px; max-height: 92vh; overflow: auto;
+  border-radius: 16px 16px 0 0; padding: 20px max(18px, env(safe-area-inset-left, 0px)) calc(20px + env(safe-area-inset-bottom, 0px));
+  display: flex; flex-direction: column; gap: 14px;
+}
+@media (min-width: 640px) { .modal { border-radius: 16px; } }
+.modal .actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+
+#toast {
+  position: fixed; left: 50%; bottom: calc(90px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%) translateY(20px);
+  background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 14px; z-index: 60;
+  opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; max-width: calc(100% - 32px);
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#toast.err { background: var(--danger); color: #fff; }
+
+.busy-overlay { position: fixed; inset: 0; z-index: 70; background: rgba(10,14,22,.15); display: flex; align-items: center; justify-content: center; }
+.spinner { width: 34px; height: 34px; border: 3px solid var(--surface); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 3s; } #toast { transition: none; } }
+
+pre.share { white-space: pre-wrap; background: var(--surface-2); border-radius: 8px; padding: 12px; margin: 0; font: 14px/1.6 var(--font-body); overflow-wrap: anywhere; }
+.hint { font-size: 13px; color: var(--ink-2); background: var(--surface-2); border-radius: 8px; padding: 10px 12px; }
+</style>
+
+</head>
+<body>
+  <div id="app"><div class="boot">読み込み中…</div></div>
+  <div id="modal-root"></div>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script>
+/* Googleの外から Apps Script を呼ぶための橋渡し（google.script.run の代わり） */
+window.CHO_API = "https://script.google.com/macros/s/AKfycby_XEylTaJNw0wQ9fXoYQzELOqroNrsTKElRJy-RySDcrPBM0C7xjE0Q-Bk0lZTf69P/exec";
+(function () {
+  var p = new URLSearchParams(location.search);
+  window.BOOT = { eventId: p.get('e') || '', admin: p.get('admin') || '', baseUrl: location.origin + location.pathname };
+  function runner(ok, ng) {
+    return new Proxy({}, { get: function (_, name) {
+      if (name === 'withSuccessHandler') return function (f) { return runner(f, ng); };
+      if (name === 'withFailureHandler') return function (f) { return runner(ok, f); };
+      return function () {
+        var args = Array.prototype.slice.call(arguments);
+        fetch(window.CHO_API, { method: 'POST', credentials: 'omit', redirect: 'follow',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ fn: name, args: args }) })
+          .then(function (r) { return r.json(); })
+          .then(function (d) { if (d.ok) { ok && ok(d.result); } else { ng && ng(new Error(d.error)); } })
+          .catch(function () { ng && ng(new Error('通信に失敗しました。電波の良い場所でもう一度お試しください。')); });
+      };
+    }});
+  }
+  window.google = { script: { run: runner(null, null) } };
+})();
+</script>
+  <script>
+(function () {
+'use strict';
+
+/* ================= 共通ユーティリティ ================= */
+var B = window.BOOT || {};
+var JST = 9 * 3600000, DAY = 86400000;
+var WD = ['日', '月', '火', '水', '木', '金', '土'];
+var app = document.getElementById('app');
+var modalRoot = document.getElementById('modal-root');
+
+function h(tag, attrs) {
+  var el = document.createElement(tag);
+  if (attrs) Object.keys(attrs).forEach(function (k) {
+    var v = attrs[k];
+    if (v == null || v === false) return;
+    if (k === 'class') el.className = v;
+    else if (k === 'text') el.textContent = v;
+    else if (k === 'html') el.innerHTML = v;
+    else if (k === 'style') el.style.cssText = v;
+    else if (k.slice(0, 2) === 'on') el.addEventListener(k.slice(2), v);
+    else if (v === true) el.setAttribute(k, '');
+    else el.setAttribute(k, v);
+  });
+  for (var i = 2; i < arguments.length; i++) append(el, arguments[i]);
+  return el;
+}
+function append(el, c) {
+  if (c == null || c === false) return;
+  if (Array.isArray(c)) { c.forEach(function (x) { append(el, x); }); return; }
+  el.appendChild(typeof c === 'string' || typeof c === 'number' ? document.createTextNode(String(c)) : c);
+}
+function clear(el) { while (el.firstChild) el.removeChild(el.firstChild); }
+
+function call(fn) {
+  var args = Array.prototype.slice.call(arguments, 1);
+  return new Promise(function (resolve, reject) {
+    var r = google.script.run.withSuccessHandler(resolve).withFailureHandler(function (e) {
+      reject(e && e.message ? new Error(e.message.replace(/^Exception: /, '')) : e);
+    });
+    r[fn].apply(r, args);
+  });
+}
+
+var busyCount = 0, busyEl = null;
+function withBusy(p) {
+  busyCount++;
+  if (!busyEl) { busyEl = h('div', { class: 'busy-overlay' }, h('div', { class: 'spinner' })); document.body.appendChild(busyEl); }
+  return p.then(function (v) { done(); return v; }, function (e) { done(); throw e; });
+  function done() { if (--busyCount <= 0 && busyEl) { busyEl.remove(); busyEl = null; busyCount = 0; } }
+}
+
+var toastTimer;
+function toast(msg, isErr) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'show' + (isErr ? ' err' : '');
+  clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.className = ''; }, isErr ? 4500 : 2200);
+}
+function fail(e) { toast((e && e.message) || String(e), true); }
+
+function store(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k)); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
+
+/* --- 日時（常に日本時間で扱う） --- */
+function parts(ms) { var d = new Date(ms + JST); return { y: d.getUTCFullYear(), m: d.getUTCMonth(), d: d.getUTCDate(), w: d.getUTCDay(), hh: d.getUTCHours(), mm: d.getUTCMinutes() }; }
+function mk(y, m, d, hh, mm) { return Date.UTC(y, m, d, hh || 0, mm || 0) - JST; }
+function dayStart(ms) { var p = parts(ms); return mk(p.y, p.m, p.d); }
+function pad(n) { return (n < 10 ? '0' : '') + n; }
+function hm(ms) { var p = parts(ms); return pad(p.hh) + ':' + pad(p.mm); }
+function hmEnd(s) { return dayStart(s.end) !== dayStart(s.start) && s.end === dayStart(s.end) ? '24:00' : hm(s.end); }
+function md(ms) { var p = parts(ms); return (p.m + 1) + '/' + p.d + '(' + WD[p.w] + ')'; }
+function fmtSlot(s) {
+  var endP = parts(s.end), sameDay = dayStart(s.start) === dayStart(s.end - 1);
+  return md(s.start) + ' ' + hm(s.start) + '–' + (sameDay ? (endP.hh === 0 && endP.mm === 0 ? '24:00' : hm(s.end)) : md(s.end) + ' ' + hm(s.end));
+}
+function fmtDeadline(dstr) { if (!dstr) return ''; var a = dstr.split('-'); var ms = mk(+a[0], +a[1] - 1, +a[2]); return md(ms); }
+function uid() { return Math.random().toString(36).slice(2, 10); }
+function now() { return Date.now(); }
+
+function eventUrl(id) { return (B.baseUrl || location.href.split('?')[0]) + '?e=' + id; }
+function lineShareUrl(text) { return 'https://line.me/R/share?text=' + encodeURIComponent(text); }
+function gcalTemplateUrl(title, s, details, location) {
+  function z(ms) { return new Date(ms).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, ''); }
+  return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(title) +
+    '&dates=' + z(s.start) + '/' + z(s.end) + '&details=' + encodeURIComponent(details || '') + '&location=' + encodeURIComponent(location || '');
+}
+function copyText(text, input) {
+  var ok = function () { toast('コピーしました'); };
+  try {
+    navigator.clipboard.writeText(text).then(ok, fallback);
+  } catch (e) { fallback(); }
+  function fallback() {
+    var el = input || h('textarea', { style: 'position:fixed;left:-999px' }, text);
+    if (!input) document.body.appendChild(el);
+    el.select(); try { document.execCommand('copy'); ok(); } catch (e) { toast('長押しでコピーしてください'); }
+    if (!input) el.remove();
+  }
+}
+
+/* --- 集計 --- */
+function tally(slots, responses) {
+  var res = {};
+  slots.forEach(function (s) { res[s.id] = { o: 0, t: 0, x: 0, score: 0 }; });
+  responses.forEach(function (r) {
+    slots.forEach(function (s) {
+      var a = r.answers[s.id]; if (!a) return;
+      res[s.id][a]++; res[s.id].score += a === 'o' ? 2 : a === 't' ? 1 : 0;
+    });
+  });
+  var max = 0;
+  slots.forEach(function (s) { max = Math.max(max, res[s.id].score); });
+  slots.forEach(function (s) { res[s.id].best = max > 0 && res[s.id].score === max; });
+  return res;
+}
+
+/* ================= 画面共通パーツ ================= */
+function topbar(right) {
+  return h('div', { class: 'topbar' },
+    h('div', { class: 'brand' },
+      h('span', { class: 'brand-mark', 'aria-hidden': 'true' }, [0,1,2,3,4,5,6,7,8].map(function (i) { return h('i', { class: [1,3,4,8].indexOf(i) >= 0 ? 'on' : '' }); })),
+      'ちょちょうせい'),
+    h('div', { class: 'spacer' }), right || null);
+}
+
+function openModal(build) {
+  var bg = h('div', { class: 'modal-bg', onclick: function (e) { if (e.target === bg) close(); } });
+  var box = h('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true' });
+  bg.appendChild(box);
+  function close() { bg.remove(); document.removeEventListener('keydown', esc); }
+  function esc(e) { if (e.key === 'Escape') close(); }
+  document.addEventListener('keydown', esc);
+  build(box, close);
+  modalRoot.appendChild(bg);
+  var f = box.querySelector('input,select,textarea,button'); if (f) f.focus();
+  return close;
+}
+
+function shareBlock(text, opts) {
+  opts = opts || {};
+  var pre = h('pre', { class: 'share' }, text);
+  return h('div', { class: 'stack' },
+    pre,
+    h('div', { class: 'row' },
+      h('a', { class: 'btn line', href: lineShareUrl(text), target: '_blank', rel: 'noopener' }, 'LINEで送る'),
+      h('button', { class: 'btn', onclick: function () { copyText(text); } }, '文面をコピー'),
+      opts.extra || null),
+    h('div', { class: 'small muted' }, '「LINEで送る」でトーク一覧が開くので、送り先のグループを選んでください。PCでうまく開かないときは文面をコピーして貼り付けてください。'));
+}
+
+function shareTextInvite(ev) {
+  var lines = ['【日程調整】' + ev.title, '都合のよい日時に ○△× を入れてください🙏'];
+  if (ev.deadline) lines.push('回答締切：' + fmtDeadline(ev.deadline));
+  lines.push('', eventUrl(ev.id));
+  return lines.join('\n');
+}
+function shareTextDecided(ev, slot, zoomUrl, zoomNote) {
+  var lines = ['【日程決定】' + ev.title, '📅 ' + fmtSlot(slot)];
+  if (zoomUrl) { lines.push('💻 Zoom：' + zoomUrl); if (zoomNote) lines.push(zoomNote); }
+  lines.push('', 'カレンダーへの追加はこちら', eventUrl(ev.id));
+  return lines.join('\n');
+}
+
+/* 回答表（行＝候補、列＝人） */
+function resultTable(ev, responses, opts) {
+  opts = opts || {};
+  var t = tally(ev.slots, responses);
+  var head = h('tr', null, h('th', { class: 'slot' }, '候補日時'), h('th', null, '○'), h('th', null, '△'), h('th', null, '×'),
+    opts.onDecide ? h('th', null, '') : null,
+    responses.map(function (r) {
+      return h('th', { class: opts.onName ? 'name-h' : '', title: r.comment || '', onclick: opts.onName ? function () { opts.onName(r); } : null }, r.name,
+        opts.onDecide && (r.email || (opts.seriesEmails || {})[r.name]) ? h('span', { title: 'カレンダー招待できます', style: 'margin-left:3px;color:var(--ok)' }, '✉') : null);
+    }));
+  var body = ev.slots.map(function (s) {
+    var c = t[s.id];
+    var cls = ev.decidedSlotId === s.id ? 'decided' : (c.best && ev.status !== 'decided' ? 'best' : '');
+    return h('tr', { class: cls },
+      h('th', { class: 'slot' }, fmtSlot(s)),
+      h('td', { class: 'score mark-o' }, c.o), h('td', { class: 'score mark-t' }, c.t), h('td', { class: 'score mark-x' }, c.x),
+      opts.onDecide ? h('td', { class: 'act' },
+        ev.decidedSlotId === s.id ? h('span', { class: 'pill decided' }, '決定') :
+        h('button', { class: 'btn sm' + (c.best ? ' primary' : ''), onclick: function () { opts.onDecide(s); } }, 'これに決定')) : null,
+      responses.map(function (r) {
+        var a = r.answers[s.id];
+        return h('td', { class: a ? 'mark-' + a : 'muted' }, a === 'o' ? '○' : a === 't' ? '△' : a === 'x' ? '×' : '–');
+      }));
+  });
+  var comments = responses.filter(function (r) { return r.comment; });
+  return h('div', { class: 'stack' },
+    h('div', { class: 'tbl-wrap' }, h('table', { class: 'tbl' }, h('thead', null, head), h('tbody', null, body))),
+    comments.length ? h('div', { class: 'panel stack', style: 'gap:6px' },
+      h('div', { class: 'label' }, 'コメント'),
+      comments.map(function (r) { return h('div', { class: 'small' }, h('b', null, r.name + '：'), r.comment); })) : null);
+}
+
+/* ================= 参加者画面 ================= */
+var P = { ev: null, responses: [], members: [], me: null, emailHints: {} };
+
+function loadParticipant() {
+  return call('api_getEvent', B.eventId).then(function (d) {
+    P.ev = d.event; P.responses = d.responses; P.members = d.members; P.emailHints = d.emailHints || {};
+    var mine = store('resp:' + P.ev.id);
+    var existing = mine && P.responses.filter(function (r) { return r.respId === mine; })[0];
+    P.me = existing ? cloneResp(existing) : { respId: '', name: store('myname') || '', answers: {}, comment: '', email: store('myemail') || '' };
+    renderParticipant();
+  });
+}
+function cloneResp(r) { return { respId: r.respId, name: r.name, answers: Object.assign({}, r.answers), comment: r.comment || '', email: '' }; }
+
+function renderParticipant() {
+  var ev = P.ev, me = P.me;
+  var keepY = window.scrollY;
+  clear(app);
+  var t = tally(ev.slots, P.responses);
+  var decidedSlot = ev.slots.filter(function (s) { return s.id === ev.decidedSlotId; })[0];
+  var wrap = h('div', { class: 'wrap' }, topbar());
+
+  wrap.appendChild(h('div', { class: 'stack' },
+    h('h1', null, ev.title),
+    h('div', { class: 'row small muted' },
+      h('span', null, '所要 ' + ev.durationMin + '分'),
+      ev.deadline ? h('span', null, '回答締切 ' + fmtDeadline(ev.deadline)) : null,
+      h('span', null, P.responses.length + '人が回答'),
+      ev.hasZoom ? h('span', null, 'オンライン（Zoom）') : null),
+    ev.memo ? h('div', { class: 'panel small', style: 'white-space:pre-wrap' }, ev.memo) : null));
+
+  if (decidedSlot) {
+    var details = (ev.zoomUrl ? 'Zoom: ' + ev.zoomUrl + '\n' + (ev.zoomNote || '') + '\n' : '') + eventUrl(ev.id);
+    wrap.appendChild(h('div', { class: 'section' }, h('div', { class: 'banner ok' },
+      h('div', { class: 'label' }, '日程が決まりました'),
+      h('div', { class: 'big' }, fmtSlot(decidedSlot)),
+      h('div', { class: 'small muted' }, 'Gmailアドレスを登録した人のGoogleカレンダーには、自動で予定が入っています。'),
+      ev.zoomUrl ? h('div', { class: 'small' }, 'Zoom：', h('a', { href: ev.zoomUrl, target: '_blank', rel: 'noopener' }, ev.zoomUrl), ev.zoomNote ? h('div', null, ev.zoomNote) : null) : null,
+      h('div', { class: 'row' },
+        h('a', { class: 'btn primary', href: gcalTemplateUrl(ev.title, decidedSlot, details, ev.zoomUrl), target: '_blank', rel: 'noopener' }, 'Googleカレンダーに追加'),
+        ev.zoomUrl ? h('button', { class: 'btn', onclick: function () { copyText(ev.zoomUrl); } }, 'ZoomのURLをコピー') : null))));
+  }
+
+  // 回答フォーム
+  var nameInput = h('input', { id: 'name', class: 'input', placeholder: '例：山田', value: me.name, maxlength: '40', autocomplete: 'nickname',
+    oninput: function () { me.name = nameInput.value; }, onchange: function () { renderParticipant(); } });
+  var answered = {};
+  P.responses.forEach(function (r) { answered[r.name] = r; });
+  var memberChips = P.members.length ? h('div', { class: 'chips' }, P.members.map(function (n) {
+    return h('button', { class: 'chip' + (answered[n] ? ' dim' : ''), type: 'button', title: answered[n] ? '回答済み（タップで修正）' : '',
+      onclick: function () {
+        if (answered[n]) { P.me = cloneResp(answered[n]); renderParticipant(); scrollToForm(); return; }
+        me.name = n; renderParticipant();
+      } }, n + (answered[n] ? ' ✓' : ''));
+  })) : null;
+
+  var rows = ev.slots.map(function (s) {
+    var c = t[s.id];
+    var seg = h('div', { class: 'seg', role: 'group', 'aria-label': fmtSlot(s) });
+    [['o', '○', '参加できる'], ['t', '△', '未定'], ['x', '×', '参加できない']].forEach(function (b) {
+      seg.appendChild(h('button', { type: 'button', class: b[0] + (me.answers[s.id] === b[0] ? ' on' : ''), 'aria-label': b[2], 'aria-pressed': me.answers[s.id] === b[0] ? 'true' : 'false',
+        onclick: function () { me.answers[s.id] = b[0]; renderParticipant(); } }, b[1]));
+    });
+    return h('div', { class: 'ans-row' + (c.best && !decidedSlot ? ' best' : '') },
+      h('div', null,
+        h('div', { class: 'when' }, md(s.start) + ' ', h('span', { class: 'num' }, hm(s.start) + '–' + hmEnd(s))),
+        h('div', { class: 'tally' }, h('span', { class: 'mark-o' }, '○' + c.o), '　', h('span', { class: 'mark-t' }, '△' + c.t), '　', h('span', { class: 'mark-x' }, '×' + c.x), c.best && !decidedSlot ? '　いま一番多い' : '')),
+      seg);
+  });
+  var filled = ev.slots.filter(function (s) { return me.answers[s.id]; }).length;
+
+  var form = h('div', { class: 'section', id: 'form' },
+    h('div', { class: 'section-head' }, h('h2', null, me.respId ? me.name + ' さんの回答を修正' : '回答する'),
+      h('div', { class: 'spacer' }),
+      me.respId ? h('button', { class: 'btn sm ghost', onclick: function () { P.me = { respId: '', name: '', answers: {}, comment: '' }; renderParticipant(); } }, '別の人として回答') : null),
+    h('label', { class: 'field' }, h('span', null, 'お名前'), nameInput),
+    memberChips,
+    emailField(me),
+    h('div', { class: 'row' }, h('span', { class: 'small muted' }, 'まとめて：'),
+      h('button', { class: 'btn sm', onclick: function () { ev.slots.forEach(function (s) { me.answers[s.id] = 'o'; }); renderParticipant(); } }, 'すべて○'),
+      h('button', { class: 'btn sm', onclick: function () { ev.slots.forEach(function (s) { if (!me.answers[s.id]) me.answers[s.id] = 'x'; }); renderParticipant(); } }, '残りを×'),
+      h('button', { class: 'btn sm ghost', onclick: function () { me.answers = {}; renderParticipant(); } }, 'クリア')),
+    h('div', { class: 'panel flush' }, h('div', { class: 'ans-list' }, rows)),
+    h('label', { class: 'field' }, h('span', null, 'コメント（任意）'),
+      h('textarea', { id: 'comment', class: 'input', rows: '2', maxlength: '300', placeholder: '例：20時以降なら参加できます', oninput: function (e) { me.comment = e.target.value; } }, me.comment)),
+    me.respId ? h('div', null, h('button', { class: 'btn sm danger ghost', onclick: function () {
+      confirmBox('回答を削除しますか？', '削除', function () {
+        withBusy(call('api_deleteResponse', ev.id, me.respId)).then(function (d) {
+          P.responses = d.responses; store('resp:' + ev.id, ''); P.me = { respId: '', name: '', answers: {}, comment: '' }; renderParticipant(); toast('削除しました');
+        }, fail);
+      });
+    } }, 'この回答を削除')) : null);
+  wrap.appendChild(form);
+
+  wrap.appendChild(h('div', { class: 'section' },
+    h('div', { class: 'section-head' }, h('h2', null, 'みんなの回答'), h('span', { class: 'small muted' }, '名前をタップするとその人の回答を修正できます')),
+    P.responses.length ? resultTable(ev, P.responses, { onName: function (r) { P.me = cloneResp(r); renderParticipant(); scrollToForm(); } })
+      : h('div', { class: 'panel empty' }, 'まだ回答はありません。最初の回答をどうぞ。')));
+
+  app.appendChild(wrap);
+  app.appendChild(h('div', { class: 'dock' }, h('div', { class: 'inner' },
+    h('div', { class: 'info' }, filled + ' / ' + ev.slots.length + ' 件 入力済み'),
+    h('button', { class: 'btn primary', onclick: submitResponse }, me.respId ? '回答を更新' : '回答を送信'))));
+  window.scrollTo(0, keepY);
+}
+function emailField(me) {
+  var hint = P.emailHints[(me.name || '').trim()];
+  var input = h('input', { id: 'email', class: 'input', type: 'email', inputmode: 'email', autocomplete: 'email', value: me.email || '',
+    placeholder: hint ? '登録済み：' + hint + '（変えるときだけ入力）' : '例：yamada@gmail.com',
+    oninput: function (e) { me.email = e.target.value.trim(); } });
+  return h('div', { class: 'field' },
+    h('span', null, 'Gmailアドレス（任意）'),
+    input,
+    h('div', { class: 'small muted' }, hint
+      ? '✓ ' + me.name + ' さんはカレンダー招待の登録済みです。日程が決まると自動でGoogleカレンダーに入ります。'
+      : '入力しておくと、日程が決まったときにあなたのGoogleカレンダーへ自動で予定が入ります（Zoomのリンク付き）。アドレスは幹事にだけ表示され、次回からは入力不要です。'));
+}
+function scrollToForm() { var f = document.getElementById('form'); if (f) f.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+
+function submitResponse() {
+  var me = P.me, ev = P.ev;
+  me.name = (me.name || '').trim();
+  if (!me.name) { toast('お名前を入力してください', true); document.getElementById('name').focus(); return; }
+  var missing = ev.slots.filter(function (s) { return !me.answers[s.id]; }).length;
+  var go = function () {
+    withBusy(call('api_submitResponse', ev.id, me)).then(function (d) {
+      store('resp:' + ev.id, d.respId); store('myname', me.name); if (me.email) store('myemail', me.email);
+      P.responses = d.responses; P.emailHints = d.emailHints || P.emailHints;
+      P.me = cloneResp(d.responses.filter(function (r) { return r.respId === d.respId; })[0] || me);
+      renderParticipant(); toast('回答を保存しました');
+    }, fail);
+  };
+  if (missing) confirmBox('未入力の候補が ' + missing + ' 件あります。このまま送信しますか？（未入力は「–」になります）', '送信する', go);
+  else go();
+}
+
+function confirmBox(msg, okLabel, onOk, danger) {
+  openModal(function (box, close) {
+    append(box, [h('div', null, msg), h('div', { class: 'actions' },
+      h('button', { class: 'btn', onclick: close }, 'キャンセル'),
+      h('button', { class: 'btn ' + (danger ? 'danger' : 'primary'), onclick: function () { close(); onOk(); } }, okLabel))]);
+  });
+}
+
+/* ================= 幹事画面 ================= */
+var A = { init: null, busy: {}, busyLoaded: {} };
+
+function loadAdmin() {
+  return call('api_adminInit', B.admin).then(function (d) { A.init = d; });
+}
+function adminBar() {
+  return topbar(h('div', { class: 'row' },
+    h('button', { class: 'btn sm ghost', onclick: function () { go('home'); } }, '一覧'),
+    h('button', { class: 'btn sm ghost', onclick: function () { go('settings'); } }, '設定')));
+}
+function go(view, arg) {
+  window.scrollTo(0, 0);
+  if (view === 'home') return withBusy(loadAdmin()).then(renderHome, fail);
+  if (view === 'settings') return renderSettings();
+  if (view === 'event') return withBusy(call('api_adminGetEvent', B.admin, arg)).then(renderAdminEvent, fail);
+  if (view === 'edit') return renderEditor(arg);
+}
+
+/* ---- 一覧 ---- */
+function renderHome() {
+  clear(app);
+  var d = A.init;
+  var wrap = h('div', { class: 'wrap' }, adminBar());
+  wrap.appendChild(h('div', { class: 'section-head' }, h('h1', null, '日程調整'), h('div', { class: 'spacer' }),
+    h('button', { class: 'btn primary', onclick: function () { go('edit', newDraft()); } }, '＋ 新しく作る')));
+
+  if (!d.settings.zoomPresets.length) {
+    wrap.appendChild(h('div', { class: 'section' }, h('div', { class: 'hint' }, 'まず「設定」でいつも使うZoomのURLを登録しておくと、作成と決定がワンタップになります。 ',
+      h('button', { class: 'btn sm', onclick: function () { go('settings'); } }, 'Zoomを登録'))));
+  }
+
+  var open = d.events.filter(function (e) { return e.status !== 'decided'; });
+  var done = d.events.filter(function (e) { return e.status === 'decided'; });
+  [['受付中', open], ['決定済み・過去の調整', done]].forEach(function (g) {
+    wrap.appendChild(h('div', { class: 'section' }, h('h2', null, g[0] + '（' + g[1].length + '）'),
+      g[1].length ? h('div', { class: 'panel flush list' }, g[1].map(eventItem)) : h('div', { class: 'panel empty' }, g[0] === '受付中' ? '受付中の調整はありません' : 'まだありません')));
+  });
+  app.appendChild(wrap);
+}
+function eventItem(e) {
+  var decided = e.slots.filter(function (s) { return s.id === e.decidedSlotId; })[0];
+  var first = e.slots[0], last = e.slots[e.slots.length - 1];
+  return h('div', { class: 'item' },
+    h('div', { class: 'body clickable', style: 'cursor:pointer', onclick: function () { go('event', e.id); } },
+      h('div', { class: 'row', style: 'gap:8px' }, h('span', { class: 'pill ' + (decided ? 'decided' : 'open') }, decided ? '決定' : '受付中'), h('span', { class: 'title' }, e.title)),
+      h('div', { class: 'meta' },
+        decided ? h('span', null, fmtSlot(decided)) : h('span', null, '候補 ' + e.slots.length + '件（' + md(first.start) + (e.slots.length > 1 ? '〜' + md(last.start) : '') + '）'),
+        h('span', null, '回答 ' + e.responseCount + '人'))),
+    h('button', { class: 'btn sm', title: 'この調整を元に次回分を作る', onclick: function () { reuseDialog(e); } }, '次回分を作る'));
+}
+
+/* ---- 過去の調整から作る ---- */
+function bumpTitle(t) {
+  var m = t.match(/第(\d+)回/);
+  if (m) return t.replace(/第\d+回/, '第' + (+m[1] + 1) + '回');
+  m = t.match(/^(.*?)(\d+)(\D*)$/);
+  if (m && +m[2] < 1000) return m[1] + (+m[2] + 1) + m[3];
+  return t;
+}
+function nthWeekdayShift(ms) { // 翌月の同じ「第N◯曜日」
+  var p = parts(ms), nth = Math.floor((p.d - 1) / 7);
+  var y = p.m === 11 ? p.y + 1 : p.y, m = (p.m + 1) % 12;
+  var first = parts(mk(y, m, 1)).w;
+  var d = 1 + ((p.w - first + 7) % 7) + nth * 7;
+  if (d > new Date(Date.UTC(y, m + 1, 0)).getUTCDate()) d -= 7;
+  return mk(y, m, d, p.hh, p.mm);
+}
+function reuseDialog(e) {
+  withBusy(call('api_adminGetEvent', B.admin, e.id)).then(function (full) {
+    var ev = full.event;
+    openModal(function (box, close) {
+      var opts = [
+        ['w1', '1週間後'], ['w2', '2週間後'], ['w4', '4週間後'], ['month', '翌月の同じ週・曜日'], ['none', '候補はコピーしない']
+      ];
+      var span = ev.slots[ev.slots.length - 1].start - ev.slots[0].start;
+      var pick = span > 7 * DAY ? 'month' : 'w1';
+      if (ev.status === 'decided') pick = ev.slots.length ? pick : 'none';
+      var onlyDecided = false;
+      var preview = h('div', { class: 'small muted' });
+      function shifted() {
+        var base = onlyDecided && ev.decidedSlotId ? ev.slots.filter(function (s) { return s.id === ev.decidedSlotId; }) : ev.slots;
+        if (pick === 'none') return [];
+        return base.map(function (s) {
+          var st = pick === 'month' ? nthWeekdayShift(s.start) : s.start + ({ w1: 7, w2: 14, w4: 28 })[pick] * DAY;
+          return { id: uid(), start: st, end: st + (s.end - s.start) };
+        }).filter(function (s) { return s.start > now(); }).sort(function (a, b) { return a.start - b.start; });
+      }
+      function upd() {
+        var list = shifted();
+        preview.textContent = list.length ? '新しい候補：' + list.slice(0, 6).map(function (s) { return md(s.start) + ' ' + hm(s.start); }).join('、') + (list.length > 6 ? ' ほか' + (list.length - 6) + '件' : '') : '候補なしで作成します（あとから追加できます）';
+        chipBox.querySelectorAll('.chip').forEach(function (c) { c.classList.toggle('on', c.dataset.k === pick); });
+      }
+      var chipBox = h('div', { class: 'chips' }, opts.map(function (o) { return h('button', { class: 'chip', 'data-k': o[0], onclick: function () { pick = o[0]; upd(); } }, o[1]); }));
+      append(box, [
+        h('h2', null, '「' + ev.title + '」を元に作成'),
+        h('div', { class: 'small muted' }, 'タイトル・所要時間・Zoom・メモと、回答してくれたメンバーの名前を引き継ぎます。'),
+        h('div', { class: 'label' }, '候補日時をずらしてコピー'), chipBox,
+        ev.decidedSlotId ? h('label', { class: 'row small' }, h('input', { type: 'checkbox', onchange: function (x) { onlyDecided = x.target.checked; upd(); } }), '前回決まった日時だけをコピー') : null,
+        preview,
+        h('div', { class: 'actions' }, h('button', { class: 'btn', onclick: close }, 'キャンセル'),
+          h('button', { class: 'btn primary', onclick: function () {
+            close();
+            go('edit', { id: '', seriesId: ev.seriesId || ev.id, title: bumpTitle(ev.title), memo: ev.memo || '', durationMin: ev.durationMin, zoomId: ev.zoomId || '', zoomUrl: ev.zoomUrl || '', deadline: '', slots: shifted(), from: ev.title });
+          } }, '編集画面へ'))
+      ]);
+      upd();
+    });
+  }, fail);
+}
+
+function newDraft() {
+  var s = A.init.settings;
+  return { id: '', seriesId: '', title: '', memo: '', durationMin: s.defaultDuration || 60, zoomId: s.defaultZoomId || '', zoomUrl: '', deadline: '', slots: [] };
+}
+
+/* ---- 作成・編集 ---- */
+var E = null; // 編集中の状態
+function renderEditor(draft) {
+  E = { d: draft, tab: store('editorTab') || 'week', weekStart: dayStart(draft.slots.length ? Math.max(draft.slots[0].start, now()) : now()), month: null, pickDates: {}, pickTimes: {} };
+  var mp = parts(E.weekStart); E.month = { y: mp.y, m: mp.m };
+  (A.init.frequentTimes || []).slice(0, 2).forEach(function (t) { E.pickTimes[t] = true; });
+  drawEditor();
+  ensureBusy(E.weekStart, E.weekStart + 7 * DAY);
+  if (draft.slots.length) ensureBusy(draft.slots[0].start, draft.slots[draft.slots.length - 1].end);
+}
+
+function drawEditor() {
+  var d = E.d, s = A.init.settings;
+  var y = window.scrollY;
+  var ae = document.activeElement, focusId = ae && ae.id, sel = null;
+  try { sel = focusId && ae.selectionStart != null ? [ae.selectionStart, ae.selectionEnd] : null; } catch (e) {}
+  clear(app);
+  var wrap = h('div', { class: 'wrap' }, adminBar());
+  wrap.appendChild(h('div', { class: 'stack' },
+    h('h1', null, d.id ? '日程調整を編集' : '新しい日程調整'),
+    d.from ? h('div', { class: 'small muted' }, '「' + d.from + '」を元に作成中') : null));
+
+  // 基本情報
+  var zoomSel = h('select', { id: 'zoom', class: 'input', onchange: function (e) { d.zoomId = e.target.value === '__custom' ? '' : e.target.value; d.zoomCustom = e.target.value === '__custom'; drawEditor(); } },
+    h('option', { value: '' }, 'なし（対面など）'),
+    s.zoomPresets.map(function (z) { return h('option', { value: z.id, selected: d.zoomId === z.id }, z.name); }),
+    h('option', { value: '__custom', selected: !d.zoomId && (d.zoomCustom || !!d.zoomUrl) }, 'その他のURLを入力'));
+  var durChips = h('div', { class: 'chips' }, [30, 60, 90, 120, 180].map(function (m) {
+    return h('button', { class: 'chip' + (d.durationMin === m ? ' on' : ''), onclick: function () { setDuration(m); } }, m < 60 ? m + '分' : (m / 60) + '時間');
+  }), h('input', { id: 'dur', class: 'input', type: 'number', min: '10', max: '1440', step: '10', value: d.durationMin, style: 'width:90px;min-height:34px', 'aria-label': '所要時間（分）',
+    onchange: function (e) { var v = +e.target.value; if (v >= 10) setDuration(v); } }), h('span', { class: 'small muted' }, '分'));
+
+  wrap.appendChild(h('div', { class: 'section panel stack' },
+    h('label', { class: 'field' }, h('span', null, 'タイトル'), h('input', { id: 'title', class: 'input', value: d.title, placeholder: '例：第5回 定例ミーティング', maxlength: '80', oninput: function (e) { d.title = e.target.value; } })),
+    h('div', { class: 'field' }, h('span', null, '所要時間'), durChips),
+    h('div', { class: 'grid2' },
+      h('label', { class: 'field' }, h('span', null, 'Zoom'), zoomSel),
+      h('label', { class: 'field' }, h('span', null, '回答締切（任意）'), h('input', { id: 'deadline', class: 'input', type: 'date', value: d.deadline, onchange: function (e) { d.deadline = e.target.value; } }))),
+    (!d.zoomId && (d.zoomCustom || d.zoomUrl)) ? h('label', { class: 'field' }, h('span', null, 'ZoomのURL'), h('input', { id: 'zoomurl', class: 'input', value: d.zoomUrl, placeholder: 'https://zoom.us/j/...', oninput: function (e) { d.zoomUrl = e.target.value; } })) : null,
+    h('label', { class: 'field' }, h('span', null, 'メモ（参加者に表示）'), h('textarea', { id: 'memo', class: 'input', rows: '2', placeholder: '議題や持ち物など', oninput: function (e) { d.memo = e.target.value; } }, d.memo))));
+
+  // 候補入力
+  var tabs = [['week', 'カレンダー'], ['bulk', '日付×時刻'], ['text', '文章から']];
+  var panel = h('div', { class: 'stack' });
+  wrap.appendChild(h('div', { class: 'section' },
+    h('div', { class: 'section-head' }, h('h2', null, '候補日時'), h('span', { class: 'small muted' }, 'グレーはあなたのGoogleカレンダーの予定です')),
+    h('div', { class: 'tabs', role: 'tablist' }, tabs.map(function (t) {
+      return h('button', { class: 'tab' + (E.tab === t[0] ? ' on' : ''), role: 'tab', 'aria-selected': E.tab === t[0] ? 'true' : 'false', onclick: function () { E.tab = t[0]; store('editorTab', t[0]); drawEditor(); } }, t[1]);
+    })),
+    panel));
+  if (E.tab === 'week') drawWeek(panel);
+  else if (E.tab === 'bulk') drawBulk(panel);
+  else drawText(panel);
+
+  wrap.appendChild(h('div', { class: 'section' },
+    h('div', { class: 'section-head' }, h('h2', null, '追加した候補（' + d.slots.length + '件）'), h('div', { class: 'spacer' }),
+      d.slots.length ? h('button', { class: 'btn sm ghost danger', onclick: function () { confirmBox('候補をすべて消しますか？', 'すべて消す', function () { d.slots = []; drawEditor(); }, true); } }, 'すべて消す') : null),
+    pickedList()));
+
+  app.appendChild(wrap);
+  app.appendChild(h('div', { class: 'dock' }, h('div', { class: 'inner' },
+    h('div', { class: 'info' }, '候補 ' + d.slots.length + '件'),
+    h('button', { class: 'btn', onclick: function () { d.id ? go('event', d.id) : go('home'); } }, 'やめる'),
+    h('button', { class: 'btn primary', onclick: saveEvent }, d.id ? '保存' : '作成してLINEで共有'))));
+  window.scrollTo(0, y);
+  if (focusId) { var f = document.getElementById(focusId); if (f) { f.focus({ preventScroll: true }); try { if (sel) f.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
+}
+
+function setDuration(m) {
+  E.d.durationMin = m;
+  E.d.slots.forEach(function (s) { s.end = s.start + m * 60000; });
+  drawEditor();
+}
+function hasSlot(start) { return E.d.slots.some(function (s) { return s.start === start; }); }
+function addSlot(start, end) {
+  if (start < now() || hasSlot(start)) return false;
+  E.d.slots.push({ id: uid(), start: start, end: end || start + E.d.durationMin * 60000 });
+  E.d.slots.sort(function (a, b) { return a.start - b.start; });
+  return true;
+}
+function removeSlot(start) { E.d.slots = E.d.slots.filter(function (s) { return s.start !== start; }); }
+
+/* Googleカレンダーの予定（埋まっている時間） */
+function ensureBusy(from, to) {
+  var days = [];
+  for (var t = dayStart(from); t < to; t += DAY) if (!A.busyLoaded[t]) days.push(t);
+  if (!days.length) return;
+  var s = days[0], e = days[days.length - 1] + DAY;
+  if (e - s > 120 * DAY) e = s + 120 * DAY;
+  days.forEach(function (dd) { A.busyLoaded[dd] = 'loading'; });
+  call('api_adminGetBusy', B.admin, s, e).then(function (list) {
+    days.forEach(function (dd) { A.busyLoaded[dd] = true; A.busy[dd] = []; });
+    list.forEach(function (b) {
+      for (var t = dayStart(b.start); t < b.end; t += DAY) { if (A.busy[t]) A.busy[t].push(b); }
+    });
+    if (E && document.querySelector('.wk, .picked')) drawEditor();
+  }, function (err) { days.forEach(function (dd) { delete A.busyLoaded[dd]; }); fail(err); });
+}
+function conflicts(s) {
+  var list = A.busy[dayStart(s.start)] || [];
+  return list.filter(function (b) { return !b.allDay && b.start < s.end && b.end > s.start; });
+}
+
+/* ---- タブ1：週グリッド ---- */
+var paint = null;
+function drawWeek(panel) {
+  var st = A.init.settings, cellH = 22, step = 30;
+  var startH = st.dayStartHour, endH = st.dayEndHour;
+  var ws = E.weekStart, today = dayStart(now());
+  var p0 = parts(ws), p6 = parts(ws + 6 * DAY);
+
+  var nav = h('div', { class: 'wk-nav' },
+    h('button', { class: 'btn sm', 'aria-label': '前の週', onclick: function () { moveWeek(-7); } }, '‹ 前'),
+    h('button', { class: 'btn sm', onclick: function () { E.weekStart = today; ensureBusy(today, today + 7 * DAY); drawEditor(); } }, '今日'),
+    h('div', { class: 'range num' }, (p0.m + 1) + '/' + p0.d + ' – ' + (p6.m + 1) + '/' + p6.d),
+    h('button', { class: 'btn sm', 'aria-label': '次の週', onclick: function () { moveWeek(7); } }, '次 ›'));
+
+  var grid = h('div', { class: 'wk', style: '--cell:' + cellH + 'px' });
+  grid.appendChild(h('div', { class: 'wk-head' }, ''));
+  for (var i = 0; i < 7; i++) {
+    var dms = ws + i * DAY, dp = parts(dms);
+    grid.appendChild(h('div', { class: 'wk-head' + (dp.w === 6 ? ' sat' : dp.w === 0 ? ' sun' : '') + (dms === today ? ' today' : '') },
+      WD[dp.w], h('b', null, dp.d)));
+  }
+  // 終日予定の行
+  var anyAllDay = false;
+  var allRow = [h('div', { class: 'wk-time', style: 'height:auto;transform:none;font-size:10px;padding-top:2px' }, '終日')];
+  for (i = 0; i < 7; i++) {
+    var ad = (A.busy[ws + i * DAY] || []).filter(function (b) { return b.allDay; });
+    if (ad.length) anyAllDay = true;
+    allRow.push(h('div', { class: 'wk-day', style: 'padding-top:2px' }, ad.map(function (b) { return h('div', { class: 'wk-busy allday', title: b.title }, b.title); })));
+  }
+  if (anyAllDay) allRow.forEach(function (n) { grid.appendChild(n); });
+
+  var times = h('div', { class: 'wk-times' });
+  for (var m = startH * 60; m < endH * 60; m += step) times.appendChild(h('div', { class: 'wk-time' }, m % 60 === 0 ? (m / 60) + ':00' : ''));
+  grid.appendChild(times);
+
+  for (i = 0; i < 7; i++) {
+    (function (dms) {
+      var col = h('div', { class: 'wk-day' });
+      for (var m = startH * 60; m < endH * 60; m += step) {
+        (function (t) {
+          var past = t < now();
+          var cell = h('div', { class: 'wk-cell ' + ((t - dms) % 3600000 === 0 ? 'hour' : 'half') + (past ? ' past' : ''), 'data-t': t });
+          if (!past) {
+            cell.addEventListener('pointerdown', function (e) {
+              if (e.pointerType !== 'mouse') return;
+              e.preventDefault();
+              paint = { add: true };
+              if (addSlot(t)) redrawSoon();
+            });
+            cell.addEventListener('pointerenter', function () { if (paint && addSlot(t)) redrawSoon(); });
+            cell.addEventListener('click', function (e) { if (lastPointer === 'mouse') return; if (addSlot(t)) drawEditor(); });
+          }
+          col.appendChild(cell);
+        })(dms + m * 60000);
+      }
+      var top0 = dms + startH * 3600000, bottom = dms + endH * 3600000;
+      function y(t) { return Math.max(0, (t - top0) / (step * 60000) * cellH); }
+      (A.busy[dms] || []).forEach(function (b) {
+        if (b.allDay || b.end <= top0 || b.start >= bottom) return;
+        var s = Math.max(b.start, top0), e = Math.min(b.end, bottom);
+        col.appendChild(h('div', { class: 'wk-busy', style: 'top:' + y(s) + 'px;height:' + Math.max(10, y(e) - y(s) - 1) + 'px', title: b.title }, b.title));
+      });
+      E.d.slots.forEach(function (s) {
+        if (dayStart(s.start) !== dms) return;
+        var e = Math.min(s.end, bottom);
+        var c = conflicts(s).length;
+        col.appendChild(h('div', { class: 'wk-slot' + (c ? ' conflict' : ''), style: 'top:' + y(s.start) + 'px;height:' + Math.max(14, y(e) - y(s.start) - 1) + 'px',
+          title: (c ? '予定と重なっています。' : '') + 'クリックで削除',
+          onpointerdown: function (ev) { ev.stopPropagation(); },
+          onclick: function () { removeSlot(s.start); drawEditor(); } }, hm(s.start)));
+      });
+      grid.appendChild(col);
+    })(ws + i * DAY);
+  }
+
+  var scroller = h('div', { class: 'wk-scroll' }, grid);
+  append(panel, [nav, scroller,
+    h('div', { class: 'legend' },
+      h('span', null, h('i', { style: 'background:var(--accent)' }), '候補（タップで削除）'),
+      h('span', null, h('i', { style: 'background:var(--busy)' }), 'カレンダーの予定'),
+      h('span', null, 'マスをタップで ' + E.d.durationMin + '分の候補を追加。PCはドラッグで連続追加'))]);
+  // 初回は 9時付近までスクロール
+  requestAnimationFrame(function () {
+    var key = 'wkScroll';
+    var target = E[key] != null ? E[key] : Math.max(0, (Math.max(startH, 9) - startH) * 2 * cellH - 4);
+    scroller.scrollTop = target;
+    scroller.addEventListener('scroll', function () { E[key] = scroller.scrollTop; });
+  });
+}
+var lastPointer = 'mouse';
+document.addEventListener('pointerdown', function (e) { lastPointer = e.pointerType; }, true);
+document.addEventListener('pointerup', function () { if (paint) { paint = null; drawEditor(); } });
+var redrawTimer;
+function redrawSoon() {
+  // ドラッグ中は再描画せず、マスに印だけ付ける（pointerupで描画）
+  clearTimeout(redrawTimer);
+  document.querySelectorAll('.wk-cell').forEach(function (c) { if (hasSlot(+c.dataset.t)) c.style.background = 'var(--accent-soft)'; });
+}
+function moveWeek(n) {
+  E.weekStart += n * DAY;
+  ensureBusy(E.weekStart, E.weekStart + 7 * DAY);
+  drawEditor();
+}
+
+/* ---- タブ2：日付×時刻 ---- */
+function drawBulk(panel) {
+  var mo = E.month, today = dayStart(now());
+  var first = mk(mo.y, mo.m, 1), fw = parts(first).w;
+  var daysIn = new Date(Date.UTC(mo.y, mo.m + 1, 0)).getUTCDate();
+  var cal = h('div', { class: 'mcal' }, WD.map(function (w, i) { return h('div', { class: 'dow', style: i === 0 ? 'color:var(--danger)' : i === 6 ? 'color:#2f6fd6' : '' }, w); }));
+  for (var i = 0; i < fw; i++) cal.appendChild(h('div', { class: 'd blank' }));
+  for (var d = 1; d <= daysIn; d++) {
+    (function (dms) {
+      var w = parts(dms).w, n = E.d.slots.filter(function (s) { return dayStart(s.start) === dms; }).length;
+      cal.appendChild(h('button', { class: 'd' + (w === 6 ? ' sat' : w === 0 ? ' sun' : '') + (E.pickDates[dms] ? ' on' : '') + (dms === today ? ' today' : ''), disabled: dms < today,
+        'aria-pressed': E.pickDates[dms] ? 'true' : 'false',
+        onclick: function () { if (E.pickDates[dms]) delete E.pickDates[dms]; else E.pickDates[dms] = true; drawEditor(); } },
+        parts(dms).d, n ? h('small', null, n + '件') : null));
+    })(mk(mo.y, mo.m, d));
+  }
+  function quick(label, pred) {
+    return h('button', { class: 'btn sm', onclick: function () {
+      for (var d = 1; d <= daysIn; d++) { var t = mk(mo.y, mo.m, d); if (t >= today && pred(parts(t).w)) E.pickDates[t] = true; }
+      drawEditor();
+    } }, label);
+  }
+  var times = {};
+  (A.init.frequentTimes || []).forEach(function (t) { times[t] = 'よく使う'; });
+  ['10:00', '13:00', '15:00', '19:00', '20:00', '21:00'].forEach(function (t) { if (!times[t]) times[t] = ''; });
+  Object.keys(E.pickTimes).forEach(function (t) { if (!(t in times)) times[t] = ''; });
+  var timeList = Object.keys(times).sort();
+  var custom = h('input', { id: 'customtime', class: 'input', type: 'time', step: '900', style: 'width:120px;min-height:34px' });
+  var nDates = Object.keys(E.pickDates).length, nTimes = Object.keys(E.pickTimes).length;
+
+  append(panel, [
+    h('div', { class: 'panel stack' },
+      h('div', { class: 'wk-nav' },
+        h('button', { class: 'btn sm', onclick: function () { shiftMonth(-1); } }, '‹'),
+        h('div', { class: 'range' }, mo.y + '年 ' + (mo.m + 1) + '月'),
+        h('button', { class: 'btn sm', onclick: function () { shiftMonth(1); } }, '›')),
+      h('div', { class: 'label' }, '① 日付をタップして選ぶ（複数可）'),
+      cal,
+      h('div', { class: 'row' }, quick('平日をすべて', function (w) { return w >= 1 && w <= 5; }), quick('土日をすべて', function (w) { return w === 0 || w === 6; }),
+        ['月', '火', '水', '木', '金'].map(function (n, i) { return quick('毎' + n, function (w) { return w === i + 1; }); }),
+        h('button', { class: 'btn sm ghost', onclick: function () { E.pickDates = {}; drawEditor(); } }, '選択解除'))),
+    h('div', { class: 'panel stack' },
+      h('div', { class: 'label' }, '② 開始時刻を選ぶ（複数可）'),
+      h('div', { class: 'chips' }, timeList.map(function (t) {
+        return h('button', { class: 'chip' + (E.pickTimes[t] ? ' on' : ''), title: times[t], onclick: function () { if (E.pickTimes[t]) delete E.pickTimes[t]; else E.pickTimes[t] = true; drawEditor(); } },
+          h('span', { class: 'num' }, t), times[t] ? h('small', { style: 'font-size:10px;opacity:.8' }, '★') : null);
+      })),
+      h('div', { class: 'row' }, custom, h('button', { class: 'btn sm', onclick: function () { if (custom.value) { E.pickTimes[custom.value] = true; drawEditor(); } } }, '時刻を追加'),
+        A.init.frequentTimes && A.init.frequentTimes.length ? h('span', { class: 'small muted' }, '★＝過去によく使った時刻') : null)),
+    h('button', { class: 'btn primary block', disabled: !(nDates && nTimes), onclick: function () {
+      var added = 0;
+      Object.keys(E.pickDates).forEach(function (dms) {
+        Object.keys(E.pickTimes).forEach(function (t) { var a = t.split(':'); if (addSlot(+dms + (+a[0] * 60 + +a[1]) * 60000)) added++; });
+      });
+      var ks = Object.keys(E.pickDates).map(Number).sort();
+      if (ks.length) ensureBusy(ks[0], ks[ks.length - 1] + DAY);
+      E.pickDates = {};
+      toast(added + '件の候補を追加しました');
+      drawEditor();
+    } }, nDates && nTimes ? nDates + '日 × ' + nTimes + '時刻 ＝ ' + (nDates * nTimes) + '件を追加' : '日付と時刻を選んでください')
+  ]);
+}
+function shiftMonth(n) { var m = E.month.m + n; E.month = { y: E.month.y + Math.floor(m / 12), m: ((m % 12) + 12) % 12 }; drawEditor(); }
+
+/* ---- タブ3：文章から ---- */
+function parseText(text) {
+  var out = [], today = dayStart(now()), tp = parts(now());
+  text.split(/\n/).forEach(function (line) {
+    var L = line.replace(/[０-９]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) - 0xFEE0); })
+      .replace(/[：]/g, ':').replace(/[／]/g, '/').replace(/[〜～ー－−—]/g, '-');
+    var dm = L.match(/(?:(\d{4})[\/\-.年])?(\d{1,2})[\/\-.月](\d{1,2})日?/);
+    if (!dm) return;
+    var y = dm[1] ? +dm[1] : tp.y, mo = +dm[2] - 1, d = +dm[3];
+    if (mo > 11 || d > 31) return;
+    var base = mk(y, mo, d);
+    if (!dm[1] && base < today - 30 * DAY) base = mk(y + 1, mo, d);
+    var rest = L.slice(dm.index + dm[0].length);
+    var re = /(\d{1,2})(?::(\d{2})|時(半|\d{1,2}分)?)\s*(?:-\s*(\d{1,2})(?::(\d{2})|時(半|\d{1,2}分)?)?)?/g, m, found = false;
+    while ((m = re.exec(rest))) {
+      var sh = +m[1], sm = m[2] ? +m[2] : m[3] === '半' ? 30 : m[3] ? parseInt(m[3], 10) : 0;
+      if (sh > 29 || sm > 59) continue;
+      var start = base + (sh * 60 + sm) * 60000, end = 0;
+      if (m[4]) { var eh = +m[4], em = m[5] ? +m[5] : m[6] === '半' ? 30 : m[6] ? parseInt(m[6], 10) : 0; end = base + (eh * 60 + em) * 60000; if (end <= start) end = 0; }
+      out.push({ start: start, end: end }); found = true;
+    }
+    if (!found) out.push({ start: base + 19 * 3600000, end: 0, guessed: true });
+  });
+  return out;
+}
+function drawText(panel) {
+  var ta = h('textarea', { id: 'paste', class: 'input', rows: '6', placeholder: '例）\n11/18(水) 19:00\n11/20 20時〜21時半\n11月25日 10:00, 14:00' }, E.textDraft || '');
+  var prev = h('div', { class: 'small' });
+  function update() {
+    E.textDraft = ta.value;
+    var list = parseText(ta.value);
+    clear(prev);
+    if (!ta.value.trim()) return;
+    append(prev, list.length ? [h('div', { class: 'label' }, '読み取り結果（' + list.length + '件）'),
+      h('div', { class: 'chips', style: 'margin-top:6px' }, list.map(function (s) {
+        return h('span', { class: 'slot-chip' + (s.guessed ? ' conflict' : '') }, md(s.start) + ' ' + hm(s.start) + (s.end ? '–' + hm(s.end) : '') + (s.guessed ? '（時刻なし→19:00）' : ''));
+      }))] : h('span', { class: 'muted' }, '日付が読み取れませんでした（例：11/18 19:00）'));
+  }
+  ta.addEventListener('input', update);
+  append(panel, [h('div', { class: 'small muted' }, 'LINEやメモの候補をそのまま貼り付けてください。1行に複数の時刻も書けます。時刻に範囲（19:00-21:00）があればその長さで、なければ所要時間で作ります。'),
+    ta, prev,
+    h('button', { class: 'btn primary block', onclick: function () {
+      var list = parseText(ta.value), n = 0;
+      list.forEach(function (s) { if (addSlot(s.start, s.end || null)) n++; });
+      if (list.length) ensureBusy(list[0].start, list[list.length - 1].start + DAY);
+      toast(n + '件の候補を追加しました' + (list.length - n ? '（過去・重複の' + (list.length - n) + '件は除外）' : ''));
+      E.textDraft = ''; drawEditor();
+    } }, '候補に追加')]);
+  update();
+}
+
+/* ---- 追加済み候補の一覧 ---- */
+function pickedList() {
+  var slots = E.d.slots;
+  if (!slots.length) return h('div', { class: 'panel empty picked' }, '上のカレンダーや日付選択から候補を追加してください');
+  var groups = [], cur = null;
+  slots.forEach(function (s) { var k = dayStart(s.start); if (!cur || cur.k !== k) { cur = { k: k, list: [] }; groups.push(cur); } cur.list.push(s); });
+  return h('div', { class: 'panel picked' }, groups.map(function (g) {
+    return h('div', { class: 'picked-day' }, h('div', { class: 'd' }, md(g.k)),
+      h('div', { class: 'chips' }, g.list.map(function (s) {
+        var c = conflicts(s);
+        return h('span', { class: 'slot-chip' + (c.length ? ' conflict' : ''), title: c.length ? '予定と重複：' + c.map(function (b) { return b.title; }).join('、') : '' },
+          hm(s.start) + '–' + hmEnd(s), c.length ? h('span', { class: 'small', style: 'color:var(--maybe)' }, '予定あり') : null,
+          h('button', { 'aria-label': '削除', onclick: function () { removeSlot(s.start); drawEditor(); } }, '×'));
+      })));
+  }));
+}
+
+function saveEvent() {
+  var d = E.d;
+  if (!d.title.trim()) { toast('タイトルを入力してください', true); document.getElementById('title').focus(); return; }
+  if (!d.slots.length) { toast('候補日時を1つ以上追加してください', true); return; }
+  var isNew = !d.id;
+  withBusy(call('api_adminSaveEvent', B.admin, d)).then(function (r) {
+    return withBusy(call('api_adminGetEvent', B.admin, r.event.id)).then(function (full) {
+      renderAdminEvent(full);
+      if (isNew) openShare(full.event);
+      else toast('保存しました');
+    });
+  }, fail);
+}
+
+function openShare(ev) {
+  openModal(function (box, close) {
+    append(box, [h('h2', null, 'グループLINEに送りましょう'), shareBlock(shareTextInvite(ev)),
+      h('div', { class: 'actions' }, h('button', { class: 'btn', onclick: close }, '閉じる'))]);
+  });
+}
+
+/* ---- 幹事：調整の詳細 ---- */
+function renderAdminEvent(full) {
+  var ev = full.event, responses = full.responses, members = full.members;
+  clear(app);
+  var decided = ev.slots.filter(function (s) { return s.id === ev.decidedSlotId; })[0];
+  var url = eventUrl(ev.id);
+  var urlInput = h('input', { class: 'input', readonly: true, value: url, onfocus: function (e) { e.target.select(); } });
+  var answeredNames = {}; responses.forEach(function (r) { answeredNames[r.name] = true; });
+  var notYet = members.filter(function (n) { return !answeredNames[n]; });
+
+  var wrap = h('div', { class: 'wrap' }, adminBar(),
+    h('div', { class: 'stack' },
+      h('div', { class: 'row' }, h('span', { class: 'pill ' + (decided ? 'decided' : 'open') }, decided ? '決定' : '受付中'),
+        h('span', { class: 'small muted' }, '回答 ' + responses.length + '人' + (ev.deadline ? '・締切 ' + fmtDeadline(ev.deadline) : ''))),
+      h('h1', null, ev.title),
+      h('div', { class: 'row' },
+        h('button', { class: 'btn sm', onclick: function () { go('edit', JSON.parse(JSON.stringify(ev))); } }, '編集'),
+        h('button', { class: 'btn sm', onclick: function () { reuseDialog(ev); } }, '次回分を作る'),
+        h('a', { class: 'btn sm', href: url, target: '_blank', rel: 'noopener' }, '参加者画面を開く'),
+        h('button', { class: 'btn sm ghost danger', onclick: function () {
+          confirmBox('「' + ev.title + '」と回答をすべて削除します。' + (decided ? '（カレンダーの予定は残ります）' : ''), '削除する', function () {
+            withBusy(call('api_adminDeleteEvent', B.admin, ev.id)).then(function () { toast('削除しました'); go('home'); }, fail);
+          }, true);
+        } }, '削除'))));
+
+  if (decided) {
+    wrap.appendChild(h('div', { class: 'section' }, h('div', { class: 'banner ok' },
+      h('div', { class: 'label' }, '決定・Googleカレンダー登録済み'),
+      h('div', { class: 'big' }, fmtSlot(decided)),
+      ev.decidedZoomUrl ? h('div', { class: 'small' }, 'Zoom：' + ev.decidedZoomUrl) : null,
+      h('div', { class: 'row' },
+        h('button', { class: 'btn line', onclick: function () { openModal(function (box, close) { append(box, [h('h2', null, '決定のお知らせ'), shareBlock(shareTextDecided(ev, decided, ev.decidedZoomUrl, ev.decidedZoomNote)), h('div', { class: 'actions' }, h('button', { class: 'btn', onclick: close }, '閉じる'))]); }); } }, '決定をLINEで知らせる'),
+        h('button', { class: 'btn ghost', onclick: function () {
+          confirmBox('決定を取り消し、Googleカレンダーの予定も削除します。よろしいですか？', '取り消す', function () {
+            withBusy(call('api_adminUndecide', B.admin, ev.id)).then(function () { toast('決定を取り消しました'); go('event', ev.id); }, fail);
+          }, true);
+        } }, '決定を取り消す')))));
+  } else {
+    wrap.appendChild(h('div', { class: 'section panel stack' },
+      h('div', { class: 'label' }, '参加者用URL（グループLINEに貼る）'),
+      h('div', { class: 'copybox' }, urlInput, h('button', { class: 'btn', onclick: function () { copyText(url, urlInput); } }, 'コピー')),
+      h('div', { class: 'row' },
+        h('button', { class: 'btn line', onclick: function () { openShare(ev); } }, 'LINEで共有'),
+        h('button', { class: 'btn', onclick: function () {
+          var lines = ['【リマインド】' + ev.title, 'まだの方は回答をお願いします🙏'];
+          if (notYet.length) lines.push('（未回答：' + notYet.map(function (n) { return n + 'さん'; }).join('、') + '）');
+          if (ev.deadline) lines.push('締切：' + fmtDeadline(ev.deadline));
+          lines.push('', url);
+          openModal(function (box, close) { append(box, [h('h2', null, 'リマインド'), shareBlock(lines.join('\n')), h('div', { class: 'actions' }, h('button', { class: 'btn', onclick: close }, '閉じる'))]); });
+        } }, 'リマインド文を作る')),
+      notYet.length ? h('div', { class: 'small muted' }, '前回までのメンバーで未回答：' + notYet.join('、')) : null));
+  }
+
+  wrap.appendChild(h('div', { class: 'section' },
+    h('div', { class: 'section-head' }, h('h2', null, '回答状況'), h('span', { class: 'small muted' }, '黄色＝いちばん都合が合う候補')),
+    h('div', { class: 'small muted' }, '✉＝Gmailアドレス登録済み（決定すると自動でカレンダーに招待されます）'),
+    resultTable(ev, responses, { seriesEmails: full.seriesEmails, onDecide: function (s) { finalizeDialog(ev, s, responses, full.seriesEmails || {}); } })));
+  app.appendChild(wrap);
+}
+
+function finalizeDialog(ev, slot, responses, seriesEmails) {
+  var st = A.init.settings;
+  var cals = (A.init.calendars || []).filter(function (c) { return c.owned; });
+  openModal(function (box, close) {
+    var zoomId = ev.zoomId || '', zoomUrl = ev.zoomUrl || '';
+    var zoomSel = h('select', { id: 'fz', class: 'input', onchange: function (e) { zoomId = e.target.value === '__custom' ? '' : e.target.value; customWrap.hidden = e.target.value !== '__custom'; } },
+      h('option', { value: '' }, 'なし'),
+      st.zoomPresets.map(function (z) { return h('option', { value: z.id, selected: zoomId === z.id }, z.name + '（' + z.url.replace(/^https?:\/\//, '').slice(0, 28) + '…）'); }),
+      h('option', { value: '__custom', selected: !zoomId && !!zoomUrl }, 'その他のURL'));
+    var customInput = h('input', { id: 'fzu', class: 'input', value: zoomUrl, placeholder: 'https://zoom.us/j/...', oninput: function (e) { zoomUrl = e.target.value; } });
+    var customWrap = h('label', { class: 'field', hidden: !(!zoomId && zoomUrl) }, h('span', null, 'ZoomのURL'), customInput);
+    var calSel = h('select', { id: 'fc', class: 'input' }, cals.map(function (c) { return h('option', { value: c.id, selected: (st.targetCalendarId ? st.targetCalendarId === c.id : c.primary) }, c.name); }));
+    var guests = h('textarea', { id: 'fg', class: 'input', rows: '2', placeholder: 'メールアドレス（カンマ区切り）' });
+    var invite = h('input', { type: 'checkbox', id: 'fi', checked: true });
+    var going = responses.filter(function (r) { var a = r.answers[slot.id]; return a === 'o' || a === 't'; });
+    var withMail = going.filter(function (r) { return r.email || seriesEmails[r.name]; });
+    var noMail = going.filter(function (r) { return !(r.email || seriesEmails[r.name]); });
+    var autoInv = h('input', { type: 'checkbox', id: 'fa', checked: withMail.length > 0 });
+    var remind = h('select', { id: 'fr', class: 'input' }, [['', 'カレンダーの既定'], ['10', '10分前'], ['30', '30分前'], ['60', '1時間前'], ['1440', '前日']].map(function (o) { return h('option', { value: o[0] }, o[1]); }));
+    var ok = responses.filter(function (r) { return r.answers[slot.id] === 'o'; }).map(function (r) { return r.name; });
+    var ng = responses.filter(function (r) { return r.answers[slot.id] !== 'o' && r.answers[slot.id] !== 't'; }).map(function (r) { return r.name; });
+    append(box, [
+      h('h2', null, 'この日時で決定'),
+      h('div', { class: 'banner ok' }, h('div', { class: 'big' }, fmtSlot(slot)),
+        h('div', { class: 'small' }, '○ ' + (ok.join('、') || 'なし')), ng.length ? h('div', { class: 'small muted' }, '×・未回答 ' + ng.join('、')) : null),
+      h('label', { class: 'field' }, h('span', null, 'Zoom（予定の場所と説明に入ります）'), zoomSel), customWrap,
+      cals.length > 1 ? h('label', { class: 'field' }, h('span', null, '登録するカレンダー'), calSel) : null,
+      h('label', { class: 'field' }, h('span', null, '通知'), remind),
+      h('div', { class: 'panel stack', style: 'gap:8px' },
+        h('label', { class: 'row', style: 'font-weight:700' }, autoInv, '○・△の人をGoogleカレンダーに招待（' + withMail.length + '人）'),
+        withMail.length ? h('div', { class: 'small' }, withMail.map(function (r) { return r.name; }).join('、')) : h('div', { class: 'small muted' }, 'Gmailアドレスを登録した○・△の人はいません'),
+        noMail.length ? h('div', { class: 'small muted' }, 'アドレス未登録（招待されません）：' + noMail.map(function (r) { return r.name; }).join('、')) : null,
+        h('label', { class: 'row small' }, invite, '招待メールも送る（相手の設定によらず確実に届きます）'),
+        h('details', null, h('summary', { class: 'small', style: 'cursor:pointer' }, 'ほかのアドレスも招待する'), h('div', { style: 'margin-top:8px' }, guests))),
+      h('div', { class: 'actions' }, h('button', { class: 'btn', onclick: close }, 'キャンセル'),
+        h('button', { class: 'btn primary', onclick: function () {
+          var opts = { zoomId: zoomId, zoomUrl: zoomId ? '' : zoomUrl, calendarId: cals.length ? calSel.value : '', guests: guests.value, sendInvites: invite.checked, inviteResponders: autoInv.checked, reminderMin: remind.value };
+          withBusy(call('api_adminFinalize', B.admin, ev.id, slot.id, opts)).then(function (r) {
+            close();
+            var e2 = r.event;
+            return withBusy(call('api_adminGetEvent', B.admin, ev.id)).then(function (full) {
+              renderAdminEvent(full);
+              openModal(function (box2, close2) {
+                append(box2, [h('h2', null, 'Googleカレンダーに登録しました'),
+                  h('div', { class: 'small' }, r.invited ? r.invited + '人をカレンダーに招待しました。 ' : '', h('a', { href: r.calendarLink, target: '_blank', rel: 'noopener' }, 'カレンダーで予定を開く')),
+                  h('div', { class: 'label' }, 'グループLINEに決定を知らせる'),
+                  shareBlock(shareTextDecided(e2, slot, e2.decidedZoomUrl, e2.decidedZoomNote)),
+                  h('div', { class: 'actions' }, h('button', { class: 'btn', onclick: close2 }, '閉じる'))]);
+              });
+            });
+          }).catch(fail);
+        } }, '決定してカレンダーに登録'))
+    ]);
+  });
+}
+
+/* ---- 設定 ---- */
+function renderSettings() {
+  var st = JSON.parse(JSON.stringify(A.init.settings));
+  var cals = A.init.calendars || [];
+  clear(app);
+  var wrap = h('div', { class: 'wrap' }, adminBar(), h('h1', null, '設定'));
+  var zl = h('div', { class: 'stack' });
+  function drawZoom() {
+    clear(zl);
+    st.zoomPresets.forEach(function (z, i) {
+      zl.appendChild(h('div', { class: 'panel stack', style: 'gap:10px' },
+        h('div', { class: 'grid2' },
+          h('label', { class: 'field' }, h('span', null, '名前'), h('input', { id: 'zn' + i, class: 'input', value: z.name, placeholder: '例：個人ミーティングルーム', oninput: function (e) { z.name = e.target.value; } })),
+          h('label', { class: 'field' }, h('span', null, 'URL'), h('input', { id: 'zu' + i, class: 'input', value: z.url, placeholder: 'https://zoom.us/j/...', oninput: function (e) { z.url = e.target.value; } }))),
+        h('label', { class: 'field' }, h('span', null, '補足（ミーティングID・パスコードなど）'), h('input', { id: 'zt' + i, class: 'input', value: z.note || '', oninput: function (e) { z.note = e.target.value; } })),
+        h('div', { class: 'row' },
+          h('label', { class: 'row small' }, h('input', { type: 'radio', name: 'defz', checked: st.defaultZoomId === z.id, onchange: function () { st.defaultZoomId = z.id; } }), '新規作成時の既定にする'),
+          h('div', { class: 'spacer', style: 'flex:1' }),
+          h('button', { class: 'btn sm ghost danger', onclick: function () { st.zoomPresets.splice(i, 1); drawZoom(); } }, '削除'))));
+    });
+    zl.appendChild(h('button', { class: 'btn', onclick: function () { st.zoomPresets.push({ id: uid(), name: 'Zoom ' + (st.zoomPresets.length + 1), url: '', note: '' }); if (!st.defaultZoomId) st.defaultZoomId = st.zoomPresets[0].id; drawZoom(); } }, '＋ ZoomのURLを追加'));
+  }
+  drawZoom();
+  var sel = {}; (st.calendarIds.length ? st.calendarIds : cals.filter(function (c) { return c.primary; }).map(function (c) { return c.id; })).forEach(function (id) { sel[id] = true; });
+  wrap.appendChild(h('div', { class: 'section' }, h('h2', null, 'よく使うZoom'), h('div', { class: 'small muted' }, '日程の決定時に、この中から選んだURLが予定に入ります。'), zl));
+  wrap.appendChild(h('div', { class: 'section panel stack' },
+    h('h2', null, 'Googleカレンダー'),
+    h('div', { class: 'field' }, h('span', null, '候補入力のときに「埋まっている時間」として表示するカレンダー'),
+      cals.map(function (c) { return h('label', { class: 'row small' }, h('input', { type: 'checkbox', checked: !!sel[c.id], onchange: function (e) { if (e.target.checked) sel[c.id] = true; else delete sel[c.id]; } }), c.name + (c.primary ? '（メイン）' : '')); })),
+    h('label', { class: 'field' }, h('span', null, '決定した予定の登録先'),
+      h('select', { id: 'tc', class: 'input', onchange: function (e) { st.targetCalendarId = e.target.value; } },
+        cals.filter(function (c) { return c.owned; }).map(function (c) { return h('option', { value: c.id, selected: st.targetCalendarId ? st.targetCalendarId === c.id : c.primary }, c.name); })))));
+  wrap.appendChild(h('div', { class: 'section panel stack' },
+    h('h2', null, '候補入力'),
+    h('div', { class: 'grid2' },
+      h('label', { class: 'field' }, h('span', null, '既定の所要時間（分）'), h('input', { id: 'dd', class: 'input', type: 'number', min: '10', step: '10', value: st.defaultDuration, onchange: function (e) { st.defaultDuration = +e.target.value; } })),
+      h('label', { class: 'field' }, h('span', null, 'カレンダーの表示時間帯'),
+        h('div', { class: 'row' },
+          h('input', { id: 'sh', class: 'input', type: 'number', min: '0', max: '23', value: st.dayStartHour, style: 'width:80px', onchange: function (e) { st.dayStartHour = +e.target.value; } }), '時〜',
+          h('input', { id: 'eh', class: 'input', type: 'number', min: '1', max: '24', value: st.dayEndHour, style: 'width:80px', onchange: function (e) { st.dayEndHour = +e.target.value; } }), '時')))));
+  app.appendChild(wrap);
+  app.appendChild(h('div', { class: 'dock' }, h('div', { class: 'inner' }, h('div', { class: 'info' }), h('button', { class: 'btn', onclick: function () { go('home'); } }, '戻る'),
+    h('button', { class: 'btn primary', onclick: function () {
+      st.calendarIds = Object.keys(sel);
+      withBusy(call('api_adminSaveSettings', B.admin, st)).then(function (s) { A.init.settings = s; A.busy = {}; A.busyLoaded = {}; toast('保存しました'); go('home'); }, fail);
+    } }, '保存'))));
+}
+
+/* ================= 起動 ================= */
+function showError(e) {
+  clear(app);
+  app.appendChild(h('div', { class: 'wrap' }, topbar(), h('div', { class: 'panel empty' }, (e && e.message) || String(e))));
+}
+if (B.admin) {
+  withBusy(loadAdmin()).then(function () {
+    if (B.eventId) go('event', B.eventId); else renderHome();
+  }).catch(showError);
+} else if (B.eventId) {
+  withBusy(loadParticipant()).catch(showError);
+} else {
+  clear(app);
+  app.appendChild(h('div', { class: 'wrap' }, topbar(), h('div', { class: 'panel empty' }, '日程調整のURLを開いてください。')));
+}
+})();
+</script>
+
+</body>
+</html>
