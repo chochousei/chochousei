@@ -394,6 +394,7 @@ function store(k, v) { try { if (v === undefined) return JSON.parse(localStorage
 function parts(ms) { var d = new Date(ms + JST); return { y: d.getUTCFullYear(), m: d.getUTCMonth(), d: d.getUTCDate(), w: d.getUTCDay(), hh: d.getUTCHours(), mm: d.getUTCMinutes() }; }
 function mk(y, m, d, hh, mm) { return Date.UTC(y, m, d, hh || 0, mm || 0) - JST; }
 function dayStart(ms) { var p = parts(ms); return mk(p.y, p.m, p.d); }
+function weekStartOf(ms) { var d = dayStart(ms); return d - parts(d).w * DAY; }
 function pad(n) { return (n < 10 ? '0' : '') + n; }
 function hm(ms) { var p = parts(ms); return pad(p.hh) + ':' + pad(p.mm); }
 function hmEnd(s) { return dayStart(s.end) !== dayStart(s.start) && s.end === dayStart(s.end) ? '24:00' : hm(s.end); }
@@ -634,7 +635,9 @@ function emailField(me) {
   return h('div', { class: 'field' },
     h('span', null, 'Gmailアドレス（任意）'),
     input,
-    h('div', { class: 'small muted' }, hint
+    h('div', { class: 'small muted' }, P.ev.autoCal === false
+      ? (hint ? '✓ ' + me.name + ' さんはアドレス登録済みです。' : '入力しておくと、日程が決まったときに幹事からGoogleカレンダーの招待を受け取れます。アドレスは幹事にだけ表示され、次回からは入力不要です。')
+      : hint
       ? '✓ ' + me.name + ' さんはカレンダー招待の登録済みです。日程が決まると自動でGoogleカレンダーに入ります。'
       : '入力しておくと、日程が決まったときにあなたのGoogleカレンダーへ自動で予定が入ります（Zoomのリンク付き）。アドレスは幹事にだけ表示され、次回からは入力不要です。'));
 }
@@ -667,6 +670,57 @@ function confirmBox(msg, okLabel, onOk, danger) {
 
 /* ================= 幹事画面 ================= */
 var A = { init: null, busy: {}, busyLoaded: {} };
+function isOwner() { return !A.init || !A.init.me || A.init.me.isOwner; }
+function goingMails(responses, seriesEmails, slot) {
+  var m = {};
+  responses.forEach(function (r) { var a = r.answers[slot.id]; var em = r.email || (seriesEmails || {})[r.name]; if (em && (a === 'o' || a === 't')) m[em] = true; });
+  return Object.keys(m);
+}
+function gcalAddUrl(ev, slot, details, guests) {
+  var u = gcalTemplateUrl(ev.title, slot, details || '', ev.decidedZoomUrl || '');
+  return guests && guests.length ? u + '&add=' + encodeURIComponent(guests.join(',')) : u;
+}
+function moveDialog(ev) {
+  openModal(function (box, close) {
+    var sel = h('select', { class: 'input' }, (A.init.members || []).map(function (m) { return h('option', { value: m.id }, m.name); }));
+    append(box, [h('h2', null, '担当を移す'),
+      h('div', { class: 'small' }, '「' + ev.title + '」を、選んだメンバーの専用ページに移します。あなたの一覧からは消え、回答はそのまま引き継がれます。'),
+      h('label', { class: 'field' }, h('span', null, '移す先'), sel),
+      h('div', { class: 'actions' }, h('button', { class: 'btn', onclick: close }, 'キャンセル'),
+        h('button', { class: 'btn primary', onclick: function () {
+          withBusy(call('api_adminMoveEvent', B.admin, ev.id, sel.value)).then(function () { close(); toast('移しました'); go('home'); }, fail);
+        } }, '移す'))]);
+  });
+}
+function membersSection() {
+  var listEl = h('div', { class: 'stack' });
+  var nameInput = h('input', { class: 'input', placeholder: '名前（例：田中）', maxlength: '40' });
+  function draw() {
+    clear(listEl);
+    var ms = A.init.members || [];
+    if (!ms.length) listEl.appendChild(h('div', { class: 'small muted' }, 'まだメンバーはいません。'));
+    ms.forEach(function (m) {
+      var url = (B.baseUrl || location.href.split('?')[0]) + '?admin=' + m.key;
+      var inp = h('input', { class: 'input', readonly: true, value: url, onfocus: function (e) { e.target.select(); } });
+      listEl.appendChild(h('div', { class: 'panel stack', style: 'gap:8px' },
+        h('div', { class: 'row' }, h('span', { style: 'font-weight:700' }, m.name + ' さん'), h('div', { class: 'spacer', style: 'flex:1' }),
+          h('button', { class: 'btn sm ghost danger', onclick: function () {
+            confirmBox(m.name + ' さんの専用URLを無効にします。この人が作った日程調整は、あなたの一覧に移ります。', '無効にする', function () {
+              withBusy(call('api_adminRemoveMember', B.admin, m.id)).then(function (list) { A.init.members = list; draw(); toast('無効にしました'); }, fail);
+            }, true);
+          } }, '削除')),
+        h('div', { class: 'copybox' }, inp, h('button', { class: 'btn', onclick: function () { copyText(url, inp); } }, 'コピー'))));
+    });
+  }
+  draw();
+  return h('div', { class: 'section stack' }, h('h2', null, 'メンバー（それぞれの専用ページ）'),
+    h('div', { class: 'small muted' }, '名前を追加すると、その人専用の幹事用URLができます。URLを本人に送ると、その人は自分で作った日程調整だけを管理できます。あなたや他の人の調整は見えません。'),
+    listEl,
+    h('div', { class: 'copybox' }, nameInput, h('button', { class: 'btn', onclick: function () {
+      var n = nameInput.value.trim(); if (!n) { toast('名前を入力してください', true); return; }
+      withBusy(call('api_adminAddMember', B.admin, n)).then(function (list) { A.init.members = list; nameInput.value = ''; draw(); toast('追加しました。URLを本人に送ってください'); }, fail);
+    } }, '追加')));
+}
 
 function loadAdmin() {
   return call('api_adminInit', B.admin).then(function (d) { A.init = d; });
@@ -692,6 +746,7 @@ function renderHome() {
   wrap.appendChild(h('div', { class: 'section-head' }, h('h1', null, '日程調整'), h('div', { class: 'spacer' }),
     h('button', { class: 'btn primary', onclick: function () { go('edit', newDraft()); } }, '＋ 新しく作る')));
 
+  if (d.me && !d.me.isOwner) wrap.appendChild(h('div', { class: 'small muted' }, d.me.name + ' さん専用のページです。自分で作った日程調整だけが表示されます。'));
   if (!d.settings.zoomPresets.length) {
     wrap.appendChild(h('div', { class: 'section' }, h('div', { class: 'hint' }, 'まず「設定」でいつも使うZoomのURLを登録しておくと、作成と決定がワンタップになります。 ',
       h('button', { class: 'btn sm', onclick: function () { go('settings'); } }, 'Zoomを登録'))));
@@ -784,7 +839,7 @@ function newDraft() {
 /* ---- 作成・編集 ---- */
 var E = null; // 編集中の状態
 function renderEditor(draft) {
-  E = { d: draft, tab: store('editorTab') || 'week', weekStart: dayStart(draft.slots.length ? Math.max(draft.slots[0].start, now()) : now()), month: null, pickDates: {}, pickTimes: {} };
+  E = { d: draft, tab: store('editorTab') || 'week', weekStart: weekStartOf(draft.slots.length ? Math.max(draft.slots[0].start, now()) : now()), month: null, pickDates: {}, pickTimes: {} };
   var mp = parts(E.weekStart); E.month = { y: mp.y, m: mp.m };
   (A.init.frequentTimes || []).slice(0, 2).forEach(function (t) { E.pickTimes[t] = true; });
   drawEditor();
@@ -894,7 +949,7 @@ function drawWeek(panel) {
 
   var nav = h('div', { class: 'wk-nav' },
     h('button', { class: 'btn sm', 'aria-label': '前の週', onclick: function () { moveWeek(-7); } }, '‹ 前'),
-    h('button', { class: 'btn sm', onclick: function () { E.weekStart = today; ensureBusy(today, today + 7 * DAY); drawEditor(); } }, '今日'),
+    h('button', { class: 'btn sm', onclick: function () { E.weekStart = weekStartOf(today); ensureBusy(E.weekStart, E.weekStart + 7 * DAY); drawEditor(); } }, '今日'),
     h('div', { class: 'range num' }, (p0.m + 1) + '/' + p0.d + ' – ' + (p6.m + 1) + '/' + p6.d),
     h('button', { class: 'btn sm', 'aria-label': '次の週', onclick: function () { moveWeek(7); } }, '次 ›'));
 
@@ -1160,21 +1215,23 @@ function renderAdminEvent(full) {
         h('button', { class: 'btn sm', onclick: function () { go('edit', JSON.parse(JSON.stringify(ev))); } }, '編集'),
         h('button', { class: 'btn sm', onclick: function () { reuseDialog(ev); } }, '次回分を作る'),
         h('a', { class: 'btn sm', href: url, target: '_blank', rel: 'noopener' }, '参加者画面を開く'),
+        (isOwner() && (A.init.members || []).length) ? h('button', { class: 'btn sm', onclick: function () { moveDialog(ev); } }, '担当を移す') : null,
         h('button', { class: 'btn sm ghost danger', onclick: function () {
-          confirmBox('「' + ev.title + '」と回答をすべて削除します。' + (decided ? '（カレンダーの予定は残ります）' : ''), '削除する', function () {
+          confirmBox('「' + ev.title + '」と回答をすべて削除します。' + (decided && ev.calendarEventId ? '（カレンダーの予定は残ります）' : ''), '削除する', function () {
             withBusy(call('api_adminDeleteEvent', B.admin, ev.id)).then(function () { toast('削除しました'); go('home'); }, fail);
           }, true);
         } }, '削除'))));
 
   if (decided) {
     wrap.appendChild(h('div', { class: 'section' }, h('div', { class: 'banner ok' },
-      h('div', { class: 'label' }, '決定・Googleカレンダー登録済み'),
+      h('div', { class: 'label' }, ev.calendarEventId ? '決定・Googleカレンダー登録済み' : '決定'),
       h('div', { class: 'big' }, fmtSlot(decided)),
       ev.decidedZoomUrl ? h('div', { class: 'small' }, 'Zoom：' + ev.decidedZoomUrl) : null,
       h('div', { class: 'row' },
         h('button', { class: 'btn line', onclick: function () { openModal(function (box, close) { append(box, [h('h2', null, '決定のお知らせ'), shareBlock(shareTextDecided(ev, decided, ev.decidedZoomUrl, ev.decidedZoomNote)), h('div', { class: 'actions' }, h('button', { class: 'btn', onclick: close }, '閉じる'))]); }); } }, '決定をLINEで知らせる'),
+        ev.calendarEventId ? null : h('a', { class: 'btn', href: gcalAddUrl(ev, decided, shareTextDecided(ev, decided, ev.decidedZoomUrl, ev.decidedZoomNote), goingMails(responses, full.seriesEmails, decided)), target: '_blank', rel: 'noopener' }, 'Googleカレンダーに追加'),
         h('button', { class: 'btn ghost', onclick: function () {
-          confirmBox('決定を取り消し、Googleカレンダーの予定も削除します。よろしいですか？', '取り消す', function () {
+          confirmBox(ev.calendarEventId ? '決定を取り消し、Googleカレンダーの予定も削除します。よろしいですか？' : '決定を取り消します。よろしいですか？', '取り消す', function () {
             withBusy(call('api_adminUndecide', B.admin, ev.id)).then(function () { toast('決定を取り消しました'); go('event', ev.id); }, fail);
           }, true);
         } }, '決定を取り消す')))));
@@ -1196,13 +1253,13 @@ function renderAdminEvent(full) {
 
   wrap.appendChild(h('div', { class: 'section' },
     h('div', { class: 'section-head' }, h('h2', null, '回答状況'), h('span', { class: 'small muted' }, '黄色＝いちばん都合が合う候補')),
-    h('div', { class: 'small muted' }, '✉＝Gmailアドレス登録済み（決定すると自動でカレンダーに招待されます）'),
+    h('div', { class: 'small muted' }, isOwner() ? '✉＝Gmailアドレス登録済み（決定すると自動でカレンダーに招待されます）' : '✉＝Gmailアドレス登録済み（決定後「Googleカレンダーに追加」から招待できます）'),
     resultTable(ev, responses, { seriesEmails: full.seriesEmails, onDecide: function (s) { finalizeDialog(ev, s, responses, full.seriesEmails || {}); } })));
   app.appendChild(wrap);
 }
 
 function finalizeDialog(ev, slot, responses, seriesEmails) {
-  var st = A.init.settings;
+  var st = A.init.settings, own = isOwner();
   var cals = (A.init.calendars || []).filter(function (c) { return c.owned; });
   openModal(function (box, close) {
     var zoomId = ev.zoomId || '', zoomUrl = ev.zoomUrl || '';
@@ -1226,10 +1283,10 @@ function finalizeDialog(ev, slot, responses, seriesEmails) {
       h('h2', null, 'この日時で決定'),
       h('div', { class: 'banner ok' }, h('div', { class: 'big' }, fmtSlot(slot)),
         h('div', { class: 'small' }, '○ ' + (ok.join('、') || 'なし')), ng.length ? h('div', { class: 'small muted' }, '×・未回答 ' + ng.join('、')) : null),
-      h('label', { class: 'field' }, h('span', null, 'Zoom（予定の場所と説明に入ります）'), zoomSel), customWrap,
-      cals.length > 1 ? h('label', { class: 'field' }, h('span', null, '登録するカレンダー'), calSel) : null,
-      h('label', { class: 'field' }, h('span', null, '通知'), remind),
-      h('div', { class: 'panel stack', style: 'gap:8px' },
+      h('label', { class: 'field' }, h('span', null, own ? 'Zoom（予定の場所と説明に入ります）' : 'Zoom（決定のお知らせに入ります）'), zoomSel), customWrap,
+      own && cals.length > 1 ? h('label', { class: 'field' }, h('span', null, '登録するカレンダー'), calSel) : null,
+      own ? h('label', { class: 'field' }, h('span', null, '通知'), remind) : null,
+      !own ? h('div', { class: 'small muted' }, '決定後に「Googleカレンダーに追加」を押すと、ご自身のカレンダーに予定を入れられます（○・△でアドレス登録済みの人も一緒に招待できます）。') : h('div', { class: 'panel stack', style: 'gap:8px' },
         h('label', { class: 'row', style: 'font-weight:700' }, autoInv, '○・△の人をGoogleカレンダーに招待（' + withMail.length + '人）'),
         withMail.length ? h('div', { class: 'small' }, withMail.map(function (r) { return r.name; }).join('、')) : h('div', { class: 'small muted' }, 'Gmailアドレスを登録した○・△の人はいません'),
         noMail.length ? h('div', { class: 'small muted' }, 'アドレス未登録（招待されません）：' + noMail.map(function (r) { return r.name; }).join('、')) : null,
@@ -1244,15 +1301,15 @@ function finalizeDialog(ev, slot, responses, seriesEmails) {
             return withBusy(call('api_adminGetEvent', B.admin, ev.id)).then(function (full) {
               renderAdminEvent(full);
               openModal(function (box2, close2) {
-                append(box2, [h('h2', null, 'Googleカレンダーに登録しました'),
-                  h('div', { class: 'small' }, r.invited ? r.invited + '人をカレンダーに招待しました。 ' : '', h('a', { href: r.calendarLink, target: '_blank', rel: 'noopener' }, 'カレンダーで予定を開く')),
+                append(box2, [h('h2', null, r.calendarLink ? 'Googleカレンダーに登録しました' : '決定しました'),
+                  !r.calendarLink ? h('div', null, h('a', { class: 'btn primary', href: gcalAddUrl(e2, slot, r.description, r.guests), target: '_blank', rel: 'noopener' }, 'Googleカレンダーに追加')) : h('div', { class: 'small' }, r.invited ? r.invited + '人をカレンダーに招待しました。 ' : '', h('a', { href: r.calendarLink, target: '_blank', rel: 'noopener' }, 'カレンダーで予定を開く')),
                   h('div', { class: 'label' }, 'グループLINEに決定を知らせる'),
                   shareBlock(shareTextDecided(e2, slot, e2.decidedZoomUrl, e2.decidedZoomNote)),
                   h('div', { class: 'actions' }, h('button', { class: 'btn', onclick: close2 }, '閉じる'))]);
               });
             });
           }).catch(fail);
-        } }, '決定してカレンダーに登録'))
+        } }, own ? '決定してカレンダーに登録' : '決定する'))
     ]);
   });
 }
@@ -1282,7 +1339,7 @@ function renderSettings() {
   drawZoom();
   var sel = {}; (st.calendarIds.length ? st.calendarIds : cals.filter(function (c) { return c.primary; }).map(function (c) { return c.id; })).forEach(function (id) { sel[id] = true; });
   wrap.appendChild(h('div', { class: 'section' }, h('h2', null, 'よく使うZoom'), h('div', { class: 'small muted' }, '日程の決定時に、この中から選んだURLが予定に入ります。'), zl));
-  wrap.appendChild(h('div', { class: 'section panel stack' },
+  if (isOwner()) wrap.appendChild(h('div', { class: 'section panel stack' },
     h('h2', null, 'Googleカレンダー'),
     h('div', { class: 'field' }, h('span', null, '候補入力のときに「埋まっている時間」として表示するカレンダー'),
       cals.map(function (c) { return h('label', { class: 'row small' }, h('input', { type: 'checkbox', checked: !!sel[c.id], onchange: function (e) { if (e.target.checked) sel[c.id] = true; else delete sel[c.id]; } }), c.name + (c.primary ? '（メイン）' : '')); })),
@@ -1297,6 +1354,7 @@ function renderSettings() {
         h('div', { class: 'row' },
           h('input', { id: 'sh', class: 'input', type: 'number', min: '0', max: '23', value: st.dayStartHour, style: 'width:80px', onchange: function (e) { st.dayStartHour = +e.target.value; } }), '時〜',
           h('input', { id: 'eh', class: 'input', type: 'number', min: '1', max: '24', value: st.dayEndHour, style: 'width:80px', onchange: function (e) { st.dayEndHour = +e.target.value; } }), '時')))));
+  if (isOwner()) wrap.appendChild(membersSection());
   app.appendChild(wrap);
   app.appendChild(h('div', { class: 'dock' }, h('div', { class: 'inner' }, h('div', { class: 'info' }), h('button', { class: 'btn', onclick: function () { go('home'); } }, '戻る'),
     h('button', { class: 'btn primary', onclick: function () {
